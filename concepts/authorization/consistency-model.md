@@ -5,7 +5,9 @@ description: Hybrid strong/eventual consistency for authorization state; general
 status: in-progress
 sources:
   - repo: tinycloud-node
-    path: auth_guards.rs
+    path: tinycloud-node-server/src/auth_guards.rs
+  - repo: tinycloud-node
+    path: tinycloud-core/src/models/invocation.rs
 tags: [authz, consistency]
 timestamp: 2026-06-22
 ---

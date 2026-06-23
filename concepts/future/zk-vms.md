@@ -5,6 +5,8 @@ description: Speculative zero-knowledge VM direction.
 status: planned
 sources:
   - repo: whitepaper
+    path: README.md
+provenance_note: design-only; no implementing code as of 2026-06
 tags: [future, zk]
 timestamp: 2026-06-22
 ---

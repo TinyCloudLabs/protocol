@@ -6,7 +6,9 @@ status: shipped
 resource: tinycloud.duckdb/*
 sources:
   - repo: tinycloud-node
-    path: tinycloud-core
+    path: tinycloud-core/src/duckdb/service.rs
+  - repo: js-sdk
+    path: packages/sdk-services/src/duckdb/DuckDbService.ts
 tags: [service, duckdb, analytics]
 timestamp: 2026-06-22
 ---

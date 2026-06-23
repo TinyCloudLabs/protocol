@@ -4,7 +4,11 @@ title: Policy as Central Primitive
 description: Team framing elevating the policy/permissioning engine above storage as the core primitive.
 status: in-progress
 sources:
-  - repo: listen
+  - repo: data-exchange
+    path: proposals/information-sphere-v0/decisions-context.md
+  - repo: data-exchange
+    path: proposals/information-sphere-v0/tinycloud-unified-policy-engine-proposal.md
+provenance_note: design-only framing; no implementing policy-engine code as of 2026-06
 tags: [policy-engine, framing]
 timestamp: 2026-06-22
 ---

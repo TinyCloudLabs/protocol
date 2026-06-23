@@ -4,9 +4,11 @@ title: Threshold Decryption (Future)
 description: Ferveo threshold decryption: ≥3 TACO nodes, key-gen ceremony, client-side share-combine, owner-only network management.
 status: planned
 sources:
-  - repo: memory
-    path: threshold-decryption-v1
-  - repo: listen
+  - repo: tinycloud-node
+    path: tinycloud-core/src/encryption_network/types.rs
+  - repo: tinycloud-node
+    path: tinycloud-core/src/encryption_network/backend.rs
+provenance_note: design-only; only the KeyBackendKind::Threshold enum slot exists in code, no ferveo/TACO implementing backend as of 2026-06. The full design spec (docs/specs/threshold-decryption-v1.md) lives outside the tracked source repos.
 tags: [future, threshold, encryption]
 timestamp: 2026-06-22
 ---

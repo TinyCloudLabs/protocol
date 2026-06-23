@@ -5,7 +5,9 @@ description: Encrypted vault/secrets/<NAME> entries managed via the SDK.
 status: shipped
 sources:
   - repo: js-sdk
-    path: apps
+    path: packages/sdk-services/src/secrets/paths.ts
+  - repo: js-sdk
+    path: packages/sdk-services/src/secrets/SecretsService.ts
 tags: [secrets, vault]
 timestamp: 2026-06-22
 ---

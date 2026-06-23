@@ -6,6 +6,8 @@ status: planned
 resource: tinycloud.compute
 sources:
   - repo: whitepaper
+    path: README.md
+provenance_note: design-only; no implementing code as of 2026-06
 tags: [service, compute, future]
 timestamp: 2026-06-22
 ---

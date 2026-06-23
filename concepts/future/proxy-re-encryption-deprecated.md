@@ -4,7 +4,9 @@ title: Proxy Re-Encryption (Deprecated)
 description: Dropped proxy re-encryption / LIT Protocol approach, superseded by delegatable threshold decryption.
 status: planned
 sources:
-  - repo: listen
+  - repo: whitepaper
+    path: appendix/appendix-k.md
+provenance_note: design-only and deprecated; this approach was dropped and never implemented in code, superseded by delegatable threshold decryption, as of 2026-06
 tags: [future, encryption, deprecated]
 timestamp: 2026-06-22
 ---

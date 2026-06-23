@@ -6,7 +6,11 @@ status: shipped
 resource: tinycloud.hooks/*
 sources:
   - repo: tinycloud-node
-    path: sdk-services
+    path: tinycloud-node-server/src/routes/hooks.rs
+  - repo: tinycloud-node
+    path: tinycloud-core/src/write_hooks.rs
+  - repo: js-sdk
+    path: packages/sdk-services/src/hooks/HooksService.ts
 tags: [service, hooks, events]
 timestamp: 2026-06-22
 ---

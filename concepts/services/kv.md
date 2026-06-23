@@ -6,7 +6,11 @@ status: shipped
 resource: tinycloud.kv/*
 sources:
   - repo: tinycloud-node
-    path: tinycloud-core
+    path: tinycloud-core/src/db.rs
+  - repo: tinycloud-node
+    path: tinycloud-core/src/models/kv_write.rs
+  - repo: js-sdk
+    path: packages/sdk-services/src/kv/KVService.ts
 tags: [service, kv, storage]
 timestamp: 2026-06-22
 ---

@@ -5,7 +5,11 @@ description: Decrypt as a capability-gated native invocation against node + netw
 status: in-progress
 sources:
   - repo: tinycloud-node
-    path: encryption_network/
+    path: tinycloud-node-server/src/routes/encryption.rs
+  - repo: tinycloud-node
+    path: tinycloud-core/src/encryption_network/service.rs
+  - repo: tinycloud-node
+    path: tinycloud-core/src/encryption_network/protocol.rs
 tags: [encryption, user-bound]
 timestamp: 2026-06-22
 ---

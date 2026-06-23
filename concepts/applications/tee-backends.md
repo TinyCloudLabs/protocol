@@ -5,6 +5,7 @@ description: TEE backend acts as a subset-checked UCAN delegate, never the key-h
 status: shipped
 sources:
   - repo: openkey
+    path: apps/api/src/routes/delegate.ts
 tags: [applications, tee, authz]
 timestamp: 2026-06-22
 ---

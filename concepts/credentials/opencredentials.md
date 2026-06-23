@@ -4,7 +4,10 @@ title: OpenCredentials
 description: Distinct canonical credentialing layer that feeds the policy engine.
 status: in-progress
 sources:
-  - repo: openkey
+  - repo: OpenCredentials
+    path: opencredentials-protocol.md
+  - repo: OpenCredentials
+    path: js/opencredentials-client/src/index.ts
 tags: [credentials, layer]
 timestamp: 2026-06-22
 ---

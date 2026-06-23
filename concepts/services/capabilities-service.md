@@ -6,7 +6,9 @@ status: shipped
 resource: tinycloud.capabilities/*
 sources:
   - repo: tinycloud-node
-    path: sdk-services
+    path: tinycloud-core/src/db.rs
+  - repo: tinycloud-node
+    path: tinycloud-core/src/types/capabilities_read_params.rs
 tags: [service, capabilities, authz]
 timestamp: 2026-06-22
 ---

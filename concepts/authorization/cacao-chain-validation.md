@@ -5,7 +5,11 @@ description: The node's algorithm for validating a CACAO/UCAN delegation chain b
 status: shipped
 sources:
   - repo: tinycloud-node
-    path: auth_guards.rs
+    path: tinycloud-core/src/models/delegation.rs
+  - repo: tinycloud-node
+    path: tinycloud-node-server/src/auth_guards.rs
+  - repo: tinycloud-node
+    path: tinycloud-core/src/relationships/parent_delegations.rs
 tags: [authz, cacao, top-gap]
 timestamp: 2026-06-22
 ---

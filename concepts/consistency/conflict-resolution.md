@@ -5,7 +5,10 @@ description: Last-writer-wins CRDT for resolving concurrent writes.
 status: planned
 sources:
   - repo: tinycloud-node
-    path: replication/
+    path: tinycloud-core/src/replication/commit.rs
+  - repo: tinycloud-node
+    path: tinycloud-core/src/replication/recon.rs
+provenance_note: design-only; replication module is present in tinycloud-core but not declared in lib.rs (not compiled or mounted) as of 2026-06
 tags: [consistency, crdt]
 timestamp: 2026-06-22
 ---

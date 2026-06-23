@@ -5,7 +5,11 @@ description: Rocket HTTP server hosting spaces, services, and the manifest servi
 status: shipped
 sources:
   - repo: tinycloud-node
-    path: node-server
+    path: tinycloud-node-server/src/lib.rs
+  - repo: tinycloud-node
+    path: tinycloud-node-server/src/routes/mod.rs
+  - repo: tinycloud-node
+    path: tinycloud-core/src/lib.rs
 tags: [nodes, architecture]
 timestamp: 2026-06-22
 ---

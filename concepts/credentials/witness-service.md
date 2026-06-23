@@ -4,7 +4,10 @@ title: Witness Service
 description: witness.tinycloud.xyz issues credentials signed by did:web:issuer.tinycloud.xyz.
 status: in-progress
 sources:
-  - repo: openkey
+  - repo: OpenCredentials
+    path: rust/opencredentials_witness/src/main.rs
+  - repo: OpenCredentials
+    path: rust/opencredentials_witness/src/routes.rs
 tags: [credentials, witness]
 timestamp: 2026-06-22
 ---

@@ -4,7 +4,10 @@ title: Hybrid Consistency
 description: Hybrid strong/eventual consistency for authorization state.
 status: in-progress
 sources:
-  - repo: listen
+  - repo: tinycloud-node
+    path: tinycloud-node-server/src/auth_guards.rs
+  - repo: tinycloud-node
+    path: tinycloud-core/src/models/invocation.rs
 tags: [consistency, hybrid]
 timestamp: 2026-06-22
 ---

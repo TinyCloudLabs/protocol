@@ -5,7 +5,7 @@ description: App + backend manifests composed into one capability request and a 
 status: shipped
 sources:
   - repo: js-sdk
-    path: sdk-core/manifest.ts
+    path: packages/sdk-core/src/manifest.ts
 tags: [applications, composition, authz]
 timestamp: 2026-06-22
 ---

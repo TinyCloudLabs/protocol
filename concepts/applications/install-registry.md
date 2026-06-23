@@ -5,7 +5,9 @@ description: App-install registry under the account space (applications/ key-pre
 status: shipped
 sources:
   - repo: js-sdk
-    path: sdk-core/manifest.ts
+    path: packages/sdk-core/src/manifest.ts
+  - repo: js-sdk
+    path: packages/sdk-core/src/account/AccountService.ts
 tags: [applications, registry]
 timestamp: 2026-06-22
 ---

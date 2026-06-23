@@ -5,6 +5,9 @@ description: Nonce-signed credential handshakes that feed conditions into the po
 status: in-progress
 sources:
   - repo: listen
+    path: packages/server/src/auth.ts
+  - repo: listen
+    path: packages/server/src/delegation-store.ts
 tags: [credentials, policy-engine]
 timestamp: 2026-06-22
 ---

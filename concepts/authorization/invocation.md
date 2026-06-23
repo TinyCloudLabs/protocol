@@ -5,7 +5,9 @@ description: UCAN invocations executing an ability against a resource, verified 
 status: shipped
 sources:
   - repo: tinycloud-node
-    path: models/invocation.rs
+    path: tinycloud-core/src/models/invocation.rs
+  - repo: tinycloud-node
+    path: tinycloud-auth/src/authorization.rs
 tags: [authz, invocation]
 timestamp: 2026-06-22
 ---

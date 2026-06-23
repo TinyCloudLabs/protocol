@@ -5,7 +5,7 @@ description: AES-256-GCM column encryption (0x01||nonce||ct) with legacy-plainte
 status: shipped
 sources:
   - repo: tinycloud-node
-    path: encryption.rs
+    path: tinycloud-core/src/encryption.rs
 tags: [encryption, at-rest]
 timestamp: 2026-06-22
 ---

@@ -5,7 +5,11 @@ description: DStack TEE confidential compute for node operation.
 status: shipped
 sources:
   - repo: tinycloud-node
-    path: node-server
+    path: tinycloud-node-server/src/dstack.rs
+  - repo: tinycloud-node
+    path: tinycloud-node-server/src/tee.rs
+  - repo: tinycloud-node
+    path: tinycloud-node-server/src/routes/attestation.rs
 tags: [nodes, tee]
 timestamp: 2026-06-22
 ---

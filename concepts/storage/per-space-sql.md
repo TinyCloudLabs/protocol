@@ -5,7 +5,9 @@ description: Per-space SQLite SQL database with optional DuckDB attached.
 status: shipped
 sources:
   - repo: tinycloud-node
-    path: tinycloud-core
+    path: tinycloud-core/src/sql/database.rs
+  - repo: tinycloud-node
+    path: tinycloud-core/src/sql/service.rs
 tags: [storage, sql]
 timestamp: 2026-06-22
 ---

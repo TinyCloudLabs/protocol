@@ -5,7 +5,11 @@ description: Wire-level resource grammar tinycloud:pkh:eip155:{chain}:{addr}:{sp
 status: shipped
 sources:
   - repo: tinycloud-node
-    path: tinycloud-auth/resource.rs:262
+    path: tinycloud-core/src/types/resource.rs
+  - repo: tinycloud-node
+    path: tinycloud-auth/src/resource.rs
+  - repo: whitepaper
+    path: appendix/appendix-b-uri-abnf-grammar.md
 tags: [spaces, addressing, top-gap]
 timestamp: 2026-06-22
 ---

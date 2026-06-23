@@ -5,7 +5,9 @@ description: Capability string form service:space:path:actions and the {namespac
 status: shipped
 sources:
   - repo: tinycloud-node
-    path: models/delegation.rs
+    path: tinycloud-auth/src/resource.rs
+  - repo: js-sdk
+    path: packages/sdk-core/src/capabilities.ts
 tags: [authz, grammar]
 timestamp: 2026-06-22
 ---

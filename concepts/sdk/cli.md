@@ -5,7 +5,9 @@ description: The command-line interface for interacting with a node.
 status: shipped
 sources:
   - repo: js-sdk
-    path: cli
+    path: packages/cli/src/index.ts
+  - repo: js-sdk
+    path: packages/cli/src/commands
 tags: [sdk, cli]
 timestamp: 2026-06-22
 ---

@@ -5,7 +5,9 @@ description: Revocation events that retract previously granted delegations.
 status: shipped
 sources:
   - repo: tinycloud-node
-    path: models/delegation.rs
+    path: tinycloud-core/src/models/revocation.rs
+  - repo: tinycloud-node
+    path: tinycloud-core/src/models/delegation.rs
 tags: [authz, revocation]
 timestamp: 2026-06-22
 ---

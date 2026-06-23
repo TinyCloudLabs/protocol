@@ -5,7 +5,9 @@ description: session key → prepareSession (SIWE-ReCap) → wallet signs → co
 status: shipped
 sources:
   - repo: js-sdk
-    path: sdk-core
+    path: packages/sdk-core/src/userAuthorization.ts
+  - repo: tinycloud-node
+    path: tinycloud-sdk-wasm/src/session.rs
 tags: [sdk, sign-in]
 timestamp: 2026-06-22
 ---

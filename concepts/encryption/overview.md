@@ -5,7 +5,9 @@ description: How at-rest encryption, encryption networks, and threshold decrypti
 status: in-progress
 sources:
   - repo: tinycloud-node
-    path: encryption.rs
+    path: tinycloud-core/src/encryption.rs
+  - repo: tinycloud-node
+    path: tinycloud-core/src/encryption_network/mod.rs
 tags: [encryption, overview]
 timestamp: 2026-06-22
 ---

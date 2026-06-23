@@ -5,7 +5,9 @@ description: sdk-core, sdk-services, node-sdk, web-sdk, sdk-rs (WASM), vfs, and 
 status: shipped
 sources:
   - repo: js-sdk
-    path: sdk-core
+    path: architecture.md
+  - repo: js-sdk
+    path: packages
 tags: [sdk, packages]
 timestamp: 2026-06-22
 ---

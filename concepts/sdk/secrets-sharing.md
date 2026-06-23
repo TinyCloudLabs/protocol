@@ -5,7 +5,9 @@ description: Sharing encrypted secrets between identities via the SDK.
 status: shipped
 sources:
   - repo: js-sdk
-    path: sdk-services
+    path: packages/sdk-core/src/delegations/SharingService.ts
+  - repo: js-sdk
+    path: packages/sdk-services/src/secrets/SecretsService.ts
 tags: [sdk, secrets]
 timestamp: 2026-06-22
 ---

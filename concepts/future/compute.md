@@ -5,6 +5,8 @@ description: Roadmap compute service with no captured design intent; MPC folded 
 status: planned
 sources:
   - repo: whitepaper
+    path: README.md
+provenance_note: design-only; no implementing code as of 2026-06
 tags: [future, compute]
 timestamp: 2026-06-22
 ---

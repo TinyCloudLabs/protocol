@@ -4,8 +4,10 @@ title: Secrets Space
 description: The reserved secrets space holding encrypted vault entries.
 status: shipped
 sources:
-  - repo: tinycloud-node
-    path: primitives
+  - repo: js-sdk
+    path: packages/sdk-services/src/secrets/paths.ts
+  - repo: js-sdk
+    path: packages/sdk-core/src/manifest.ts
 tags: [secrets, space]
 timestamp: 2026-06-22
 ---

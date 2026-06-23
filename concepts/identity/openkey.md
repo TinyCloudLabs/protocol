@@ -5,6 +5,11 @@ description: Passkey/TEE-backed identity provider and OpenCredentials companion 
 status: in-progress
 sources:
   - repo: openkey
+    path: apps/api/src/routes/keys.ts
+  - repo: openkey
+    path: apps/api/src/routes/delegate.ts
+  - repo: openkey
+    path: README.md
 tags: [identity, openkey, tee]
 timestamp: 2026-06-22
 ---

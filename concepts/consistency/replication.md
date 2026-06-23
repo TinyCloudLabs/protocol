@@ -5,7 +5,10 @@ description: P2P replication subsystem present in the codebase but not compiled 
 status: planned
 sources:
   - repo: tinycloud-node
-    path: replication/
+    path: tinycloud-core/src/replication/mod.rs
+  - repo: tinycloud-node
+    path: tinycloud-node-server/src/routes/replication.rs
+provenance_note: present in tinycloud-core but the replication module is not declared in lib.rs (not compiled or mounted) as of 2026-06
 tags: [consistency, replication, future]
 timestamp: 2026-06-22
 ---

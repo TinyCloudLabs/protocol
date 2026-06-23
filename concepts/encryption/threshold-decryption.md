@@ -5,9 +5,10 @@ description: Delegatable ferveo-based threshold decryption; KeyBackendKind::Thre
 status: planned
 sources:
   - repo: tinycloud-node
-    path: encryption_network/
-  - repo: memory
-    path: threshold-decryption-v1
+    path: tinycloud-core/src/encryption_network/types.rs
+  - repo: tinycloud-node
+    path: tinycloud-core/src/encryption_network/backend.rs
+provenance_note: design-only; only the KeyBackendKind::Threshold enum slot exists in code, no implementing backend as of 2026-06. Design spec lives outside the tracked source repos (docs/specs/threshold-decryption-v1.md).
 tags: [encryption, threshold, future]
 timestamp: 2026-06-22
 ---

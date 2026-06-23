@@ -5,9 +5,11 @@ description: Capability = resource × ability × caveats, the unit of authorizat
 status: shipped
 sources:
   - repo: tinycloud-node
-    path: models/delegation.rs
+    path: tinycloud-auth/src/resource.rs
   - repo: tinycloud-node
-    path: auth_guards.rs
+    path: tinycloud-core/src/models/delegation.rs
+  - repo: tinycloud-node
+    path: tinycloud-node-server/src/auth_guards.rs
 tags: [authz, capabilities]
 timestamp: 2026-06-22
 ---

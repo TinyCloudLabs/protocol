@@ -5,7 +5,9 @@ description: delegateTo(did, PermissionEntry[]) and PortableDelegation for shari
 status: shipped
 sources:
   - repo: js-sdk
-    path: sdk-core
+    path: packages/node-sdk/src/delegation.ts
+  - repo: js-sdk
+    path: packages/sdk-core/src/delegations/DelegationManager.ts
 tags: [sdk, delegation, authz]
 timestamp: 2026-06-22
 ---

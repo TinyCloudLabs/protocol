@@ -6,7 +6,11 @@ status: shipped
 resource: tinycloud.space/*
 sources:
   - repo: tinycloud-node
-    path: tinycloud-auth/resource.rs:262
+    path: tinycloud-core/src/db.rs
+  - repo: tinycloud-node
+    path: tinycloud-auth/src/resource.rs
+  - repo: tinycloud-node
+    path: tinycloud-sdk-wasm/src/host.rs
 tags: [spaces, primitive]
 timestamp: 2026-06-22
 ---

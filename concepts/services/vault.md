@@ -6,7 +6,9 @@ status: in-progress
 resource: tinycloud.vault
 sources:
   - repo: js-sdk
-    path: sdk-services
+    path: packages/sdk-services/src/vault/DataVaultService.ts
+  - repo: js-sdk
+    path: packages/sdk-services/src/vault/createVaultCrypto.ts
 tags: [service, vault, encryption]
 timestamp: 2026-06-22
 ---

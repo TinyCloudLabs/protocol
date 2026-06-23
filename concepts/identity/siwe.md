@@ -5,7 +5,11 @@ description: SIWE sign-in establishes root authority and bootstraps session dele
 status: shipped
 sources:
   - repo: tinycloud-node
-    path: tinycloud-auth/identity.rs
+    path: tinycloud-auth/src/authorization.rs
+  - repo: tinycloud-node
+    path: tinycloud-auth/src/identity.rs
+  - repo: js-sdk
+    path: packages/sdk-core/src/userAuthorization.ts
 tags: [identity, siwe]
 timestamp: 2026-06-22
 ---

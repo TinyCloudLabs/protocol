@@ -5,7 +5,11 @@ description: Content-addressed blob store (FileSystem or S3) keyed by SpaceId + 
 status: shipped
 sources:
   - repo: tinycloud-node
-    path: tinycloud-core
+    path: tinycloud-core/src/storage/mod.rs
+  - repo: tinycloud-node
+    path: tinycloud-node-server/src/storage/file_system.rs
+  - repo: tinycloud-node
+    path: tinycloud-node-server/src/storage/s3.rs
 tags: [storage, blobs]
 timestamp: 2026-06-22
 ---

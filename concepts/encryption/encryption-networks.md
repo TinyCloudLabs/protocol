@@ -6,7 +6,11 @@ status: in-progress
 resource: urn:tinycloud:encryption
 sources:
   - repo: tinycloud-node
-    path: encryption_network/
+    path: tinycloud-core/src/encryption_network/backend.rs
+  - repo: tinycloud-node
+    path: tinycloud-core/src/encryption_network/service.rs
+  - repo: js-sdk
+    path: packages/sdk-services/src/encryption/envelope.ts
 tags: [encryption, networks]
 timestamp: 2026-06-22
 ---

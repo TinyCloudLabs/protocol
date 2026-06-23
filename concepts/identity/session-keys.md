@@ -5,7 +5,11 @@ description: Ephemeral Ed25519 did:key session keys delegated to from the owner 
 status: shipped
 sources:
   - repo: js-sdk
-    path: sdk-core/identity.ts
+    path: packages/sdk-core/src/identity.ts
+  - repo: js-sdk
+    path: packages/sdk-core/src/userAuthorization.ts
+  - repo: tinycloud-node
+    path: tinycloud-sdk-wasm/src/session.rs
 tags: [identity, session-keys]
 timestamp: 2026-06-22
 ---

@@ -5,7 +5,9 @@ description: Root SIWE→CACAO (ReCap) delegations and child UCAN delegations at
 status: shipped
 sources:
   - repo: tinycloud-node
-    path: models/delegation.rs
+    path: tinycloud-core/src/models/delegation.rs
+  - repo: tinycloud-node
+    path: tinycloud-auth/src/authorization.rs
 tags: [authz, delegation]
 timestamp: 2026-06-22
 ---

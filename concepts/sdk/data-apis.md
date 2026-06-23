@@ -5,7 +5,11 @@ description: Reading and writing data across the KV, SQL, and DuckDB services fr
 status: shipped
 sources:
   - repo: js-sdk
-    path: sdk-services
+    path: packages/sdk-services/src/kv/KVService.ts
+  - repo: js-sdk
+    path: packages/sdk-services/src/sql/SQLService.ts
+  - repo: js-sdk
+    path: packages/sdk-services/src/duckdb/DuckDbService.ts
 tags: [sdk, data]
 timestamp: 2026-06-22
 ---

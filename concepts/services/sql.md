@@ -6,7 +6,9 @@ status: shipped
 resource: tinycloud.sql/*
 sources:
   - repo: tinycloud-node
-    path: tinycloud-core
+    path: tinycloud-core/src/sql/service.rs
+  - repo: js-sdk
+    path: packages/sdk-services/src/sql/SQLService.ts
 tags: [service, sql, storage]
 timestamp: 2026-06-22
 ---

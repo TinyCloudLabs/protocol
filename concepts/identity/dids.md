@@ -5,9 +5,9 @@ description: Owner did:pkh:eip155 root authority plus ephemeral Ed25519 did:key 
 status: shipped
 sources:
   - repo: tinycloud-node
-    path: tinycloud-auth/identity.rs
+    path: tinycloud-auth/src/identity.rs
   - repo: js-sdk
-    path: sdk-core/identity.ts
+    path: packages/sdk-core/src/identity.ts
 tags: [identity, did]
 timestamp: 2026-06-22
 ---

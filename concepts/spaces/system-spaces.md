@@ -4,10 +4,12 @@ title: System Spaces
 description: Reserved spaces: default, public, account, secrets, applications, plus the synthetic encryption label.
 status: shipped
 sources:
-  - repo: tinycloud-node
-    path: primitives
   - repo: js-sdk
-    path: sdk-core/manifest.ts
+    path: packages/sdk-core/src/manifest.ts
+  - repo: tinycloud-node
+    path: tinycloud-sdk-wasm/src/session.rs
+  - repo: tinycloud-node
+    path: tinycloud-node-server/src/routes/public.rs
 tags: [spaces, system-spaces]
 timestamp: 2026-06-22
 ---

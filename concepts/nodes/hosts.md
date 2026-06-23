@@ -5,7 +5,9 @@ description: Hosts and host delegations that bind spaces to serving nodes.
 status: shipped
 sources:
   - repo: tinycloud-node
-    path: node-server
+    path: tinycloud-sdk-wasm/src/host.rs
+  - repo: tinycloud-node
+    path: tinycloud-core/src/db.rs
 tags: [nodes, hosts]
 timestamp: 2026-06-22
 ---

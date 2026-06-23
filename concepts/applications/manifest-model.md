@@ -5,7 +5,7 @@ description: App/data contract: namespace, default applications space, declared 
 status: shipped
 sources:
   - repo: js-sdk
-    path: sdk-core/manifest.ts
+    path: packages/sdk-core/src/manifest.ts
 tags: [applications, manifest]
 timestamp: 2026-06-22
 ---

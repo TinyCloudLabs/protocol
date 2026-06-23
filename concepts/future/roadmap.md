@@ -4,7 +4,9 @@ title: Roadmap
 description: Overview of planned protocol work not yet shipped.
 status: planned
 sources:
-  - repo: listen
+  - repo: whitepaper
+    path: README.md
+provenance_note: design-only roadmap overview; no implementing code as of 2026-06
 tags: [future, roadmap]
 timestamp: 2026-06-22
 ---

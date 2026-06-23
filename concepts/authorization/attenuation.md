@@ -5,7 +5,9 @@ description: Subset-check enforcing that child capabilities are strictly contain
 status: shipped
 sources:
   - repo: tinycloud-node
-    path: models/delegation.rs
+    path: tinycloud-auth/src/resource.rs
+  - repo: tinycloud-node
+    path: tinycloud-core/src/models/delegation.rs
 tags: [authz, attenuation]
 timestamp: 2026-06-22
 ---
