@@ -1,0 +1,30 @@
+# TinyCloud Protocol
+
+> Signatures Are All You Need: cryptographic access control for AI and applications. This is the
+> agent-readable Open Knowledge Format bundle for the TinyCloud data protocol. Start at index.md,
+> then drill into a section's index.md (progressive disclosure). Each section below lists its index.
+
+## Sections
+
+- [Foundations](concepts/foundations/index.md): Framing, thesis, and trust model.
+- [Identity](concepts/identity/index.md): DIDs, SIWE, session keys, OpenKey.
+- [Spaces](concepts/spaces/index.md): The autonomic space primitive, addressing grammar, hosting.
+- [Authorization](concepts/authorization/index.md): Capabilities, delegation, invocation, CACAO validation.
+- [Policy Engine](concepts/policy-engine/index.md): The central permissioning primitive.
+- [Services](concepts/services/index.md): Node-hosted, capability-gated services (KV, SQL, hooks, ...).
+- [Encryption](concepts/encryption/index.md): At-rest, encryption networks, threshold decryption.
+- [Storage](concepts/storage/index.md): Blob store, metadata DB, per-space SQL.
+- [Consistency](concepts/consistency/index.md): Epochs/DAG, conflict resolution, replication.
+- [Applications](concepts/applications/index.md): Manifests, capability composition, TEE backends.
+- [Secrets](concepts/secrets/index.md): Secrets space and encrypted vault entries.
+- [Credentials](concepts/credentials/index.md): OpenCredentials feeding the policy engine.
+- [Nodes](concepts/nodes/index.md): Node architecture, TEE/DStack, host delegations.
+- [SDK](concepts/sdk/index.md): How to use the protocol from code.
+- [Future](concepts/future/index.md): Roadmap and design-intent items.
+
+## Meta
+
+- [Glossary](meta/glossary.md): Canonical vocabulary and retired aliases.
+- [Contradictions](meta/contradictions.md): Tracked spec-vs-impl divergences.
+- [Sources](meta/sources.md): Provenance map and known gaps.
+- [Status](meta/status.md): Shipped / in-progress / planned matrix.
