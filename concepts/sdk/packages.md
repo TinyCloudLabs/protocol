@@ -1,23 +1,43 @@
 ---
 type: concept
 title: Packages
-description: sdk-core, sdk-services, node-sdk, web-sdk, sdk-rs (WASM), vfs, and cli.
+description: The js-sdk package layout — platform-agnostic core, service implementations, node and web SDKs, the Rust→WASM bridge, VFS, and CLI — and how they compose.
 status: shipped
+layer: protocol
 sources:
   - repo: js-sdk
     path: architecture.md
   - repo: js-sdk
     path: packages
 tags: [sdk, packages]
-timestamp: 2026-06-22
+timestamp: 2026-06-23
 ---
 
 # Packages
 
-<!-- TODO: author from sources. Validate technical claims with: scripts/cx <repo> "<question>" -->
-<!-- Cross-link related concepts with normal markdown links: [Capabilities](../authorization/capabilities.md) -->
+The TinyCloud **js-sdk** is a monorepo of layered packages: a platform-agnostic core, service implementations, platform SDKs for Node and the browser, a Rust→WASM crypto bridge, plus a VFS and a CLI. Together they are how an application speaks the protocol — building [[sign-in-flow|sign-in]], [[capabilities|capabilities]], and [[data-apis|data access]] without hand-rolling crypto.
 
-> **Status:** shipped. sdk-core, sdk-services, node-sdk, web-sdk, sdk-rs (WASM), vfs, and cli.
+## Members
+
+- **`@tinycloud/sdk-core`** — the `TinyCloud` class + platform-agnostic model: identity, [[autonomic-space|spaces]], [[manifest-model|manifests]], [[delegation-api|delegations]], [[capabilities]].
+- **`@tinycloud/sdk-services`** — the [[services|service]] clients: [[kv]], [[sql]], [[duckdb]], [[hooks]], [[vault]], [[secrets-sharing|secrets]], [[encryption-networks|encryption]].
+- **`@tinycloud/node-sdk`** — `TinyCloudNode`, `NodeUserAuthorization`, `PrivateKeySigner` (server/Node runtime).
+- **`@tinycloud/web-sdk`** — `TinyCloudWeb`, which wraps a `TinyCloudNode` for the browser (wallet signer, session storage).
+- **`@tinycloud/sdk-rs`** — the Rust source compiled to WASM (`web-sdk-wasm`, `node-sdk-wasm`): the [[session-keys|session manager]], [[siwe|SIWE]]/[[recap|ReCap]] prep, [[delegation]] signing, vault crypto.
+- **`vfs`** — a virtual filesystem abstraction over [[kv]].
+- **`cli`** — the `tc` [[cli|command-line interface]].
+
+## Mechanics
+
+`web-sdk` and `node-sdk` are thin platform adapters over the shared `sdk-core` + `sdk-services`; the heavy cryptographic operations cross into `sdk-rs` (WASM). So an app targets `web-sdk` or `node-sdk`, gets the same `TinyCloud` API, and the WASM boundary handles signing/session management identically on both.
+
+## Relationships
+
+Implements client access to all [[services]]; drives [[sign-in-flow]]; exposes [[data-apis]] and the [[delegation-api]]; the WASM layer mints the [[session-keys|session keys]] and [[siwe|SIWE]]/[[ucan|UCAN]] tokens validated by [[cacao-chain-validation]].
+
+## Status & drift
+
+Shipped. Note `architecture.md` references a legacy `web-core` package not present in the current workspace; the layout above reflects current `packages/`.
 
 ## Sources
-- `js-sdk`: `sdk-core`
+- `js-sdk`: `architecture.md`, `packages/` (sdk-core, sdk-services, node-sdk, web-sdk, sdk-rs, vfs, cli)
