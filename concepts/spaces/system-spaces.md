@@ -25,7 +25,7 @@ System spaces are [[architecture-layers|Layer 1]] convention. They give the [[ma
 
 ## Shape
 
-There is **no backend reserved-name list** — `tinycloud-node` will host a space of any name. The canonical set is defined and enforced **in the SDK**: `packages/sdk-core/src/manifest.ts` (manifest space resolution) and `tinycloud-sdk-wasm/src/session.rs` (session/host wiring). The names:
+There is **no backend reserved-name list** — `tinycloud-node` will host a space of any name (`tinycloud-auth/src/resource.rs::Name` accepts any string; validation is a TODO). The only name with backend behavior is `public`, special-cased for unauthenticated reads by `tinycloud-node-server/src/routes/public.rs::is_public_space`. The canonical set is conventional, defined **in the SDK** as named constants (`packages/sdk-core/src/manifest.ts`: `ACCOUNT_REGISTRY_SPACE="account"`, `SECRETS_SPACE="secrets"`, `DEFAULT_MANIFEST_SPACE="applications"`, `ENCRYPTION_MANIFEST_SPACE="encryption"`). The names:
 
 | Space | Holds | Notes |
 |-------|-------|-------|
@@ -58,5 +58,5 @@ Each is an [[autonomic-space|autonomic space]] addressed by the [[uri-addressing
 Shipped. **Drift:** the whitepaper lists the system space as **`apps`**; the code uses **`applications`** — code is canonical (see [[meta/contradictions]]). The set is SDK-enforced, not node-enforced, so it is a convention that could evolve; treat the list as current-as-of-code, not a frozen protocol constant.
 
 ## Sources
-- `js-sdk`: `packages/sdk-core/src/manifest.ts` (space resolution), `packages/sdk-core/src/account/AccountService.ts` (`account` registry + `applications/` prefix)
-- `tinycloud-node`: `tinycloud-sdk-wasm/src/session.rs` (session/host wiring); no backend reserved-name list (confirmed via `cx`)
+- `js-sdk`: `packages/sdk-core/src/manifest.ts` (space-name constants), `packages/sdk-core/src/account/AccountService.ts` (`account` registry + `applications/` / `spaces/` prefixes), `packages/sdk-services/src/secrets/paths.ts` (`resolveSecretPath` → `vault/secrets/<NAME>`, scoped variant), `packages/sdk-services/src/encryption/networkId.ts` (`buildNetworkId`/`parseNetworkId`)
+- `tinycloud-node`: `tinycloud-node-server/src/routes/public.rs` (`is_public_space`), `tinycloud-auth/src/resource.rs` (`Name` accepts any string — no reserved-name list); confirmed via `cx`
