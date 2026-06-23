@@ -55,7 +55,7 @@ Because authority is the owner's key and access is a self-verifying signature
 chain, the same sovereign data follows the user across applications. Swap one
 agent or app for another and it picks up the same data and identity, scoped to
 only what you granted. This portability is the foundation the
-[four-pillar substrate](./four-pillar-substrate.md) builds on, and the
+[[architecture-layers|three-layer architecture]] builds on, and the
 [trust model](./trust-model.md) explains exactly which parties you must trust to
 get it.
 

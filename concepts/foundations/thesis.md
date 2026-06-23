@@ -64,7 +64,7 @@ what, all the way back to you.
   [consistency model](../authorization/consistency-model.md).
 
 The companion framings — [sovereign data](./sovereign-data.md), the
-[four-pillar substrate](./four-pillar-substrate.md), and the
+[[architecture-layers|three-layer architecture]], and the
 [trust model](./trust-model.md) — expand on what this thesis buys the user.
 
 ## Sources
