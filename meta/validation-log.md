@@ -14,3 +14,10 @@ Logged for review, not auto-applied. Format: `[ok|wrong|unverified] <claim> — 
 - [ok] Space created lazily in `transact()` when a delegation carries `tinycloud.space/host` with no path/query/fragment and service=="space" — cx(tinycloud-node): db.rs:794 (match), db.rs:817 (insert).
 - [ok] `SpaceId { base_did: DIDBuf, name: Name }`; `Display` = `tinycloud:{suffix}:{name}`, `suffix = base_did[4..]` — cx: resource.rs:49 / :63 / :262.
 - [ok] No `orbit` space concept in code — cx: no `orbit` hits in source crates (only stray CLAUDE.md mention).
+
+## [2026-06-23] uri-addressing-grammar
+
+- [ok] Canonical resource URI = `tinycloud:{did-suffix}:{name}/{service}[/path][?query][#fragment]`; ABNF matches the comment block in core/types/resource.rs; Display at auth/resource.rs:262 — cx confirmed.
+- [ok] `ResourceId::extends` path rule (same space/service/fragment + prefix where base ends in '/' or boundary is '/'); base with no path extended by any child; child lacking a path does NOT extend a base with a path (DoesNotExtendPath) — cx: resource.rs:193-200.
+- [wrong] `ln:{chain}:{addr}:{name}` "internal short form" — cx(tinycloud-node): `ln:` does NOT appear anywhere in db.rs; canonicalize_did emits `did:pkh:eip155:…`. Older discovery-map claim is stale; authored as code-canonical with drift note.
+- [ok] whitepaper Appendix B ABNF drift: spec restricts space/service charset to ALPHA/DIGIT/-/_, code uses looser nchar and does no Name/Service validation (FromStr TODO stubs) — confirmed against resource.rs.
