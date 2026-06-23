@@ -4,9 +4,12 @@ title: Agent Transaction Policy
 description: Generalization of the policy engine into an agent transaction policy engine.
 status: planned
 sources:
+  - repo: policy-engine
+    path: src/enrollment.rs
+  - repo: policy-engine
+    path: crates/policy-runtime/src/lib.rs
   - repo: data-exchange
     path: proposals/information-sphere-v0/tinycloud-unified-policy-engine-proposal.md
-provenance_note: design-only; no implementing code as of 2026-06
 tags: [policy-engine, agents]
 timestamp: 2026-06-22
 ---
