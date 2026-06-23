@@ -78,7 +78,7 @@ observe plaintext during processing. TinyCloud closes that gap two ways:
 
 This trust model is the concrete cost of the [thesis](./thesis.md) and the
 [sovereign data](./sovereign-data.md) guarantee; the
-[four-pillar substrate](./four-pillar-substrate.md) layers governance on top of
+[[architecture-layers|three-layer architecture]] layers governance on top of
 it.
 
 ## Sources
