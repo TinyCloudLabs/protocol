@@ -1,0 +1,19 @@
+# rumdl — Markdown style linter for the OKF concept bundle.
+# https://github.com/rvben/rumdl
+#
+# STRICT: default rule set is enabled. rumdl catches Markdown *style* issues
+# (heading levels, list style, spacing, etc.). It does NOT validate YAML
+# frontmatter — that is handled by bin/lint.sh's frontmatter check.
+#
+# Run:  rumdl check .        (or: pip install rumdl)
+
+[global]
+# Lint the concept bundle; ignore generated/site/vendor trees.
+# All default rules stay ON (strict) — existing files that flag are expected
+# to be cleaned up over time.
+exclude = [
+  "site/node_modules",
+  "site/dist",
+  "site/.astro",
+  ".git",
+]
