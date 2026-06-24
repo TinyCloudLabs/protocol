@@ -1,7 +1,7 @@
 ---
 type: index
 title: Policy Engine
-description: The central permissioning primitive: policy-gated delegation generalizing to agent transactions.
+description: "The central permissioning primitive: policy-gated delegation generalizing to agent transactions."
 timestamp: 2026-06-22
 ---
 

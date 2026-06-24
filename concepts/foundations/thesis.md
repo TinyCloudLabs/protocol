@@ -1,7 +1,7 @@
 ---
 type: concept
 title: Thesis
-description: Signatures Are All You Need: cryptographic access control for AI and applications.
+description: "Signatures Are All You Need: cryptographic access control for AI and applications."
 status: shipped
 sources:
   - repo: whitepaper

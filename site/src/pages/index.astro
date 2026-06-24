@@ -1,0 +1,11 @@
+---
+import { getCollection } from 'astro:content';
+const concepts = await getCollection('concepts');
+---
+<html lang="en">
+  <head><meta charset="utf-8" /><title>TinyCloud Protocol</title></head>
+  <body>
+    <h1>TinyCloud Protocol</h1>
+    <p>Scaffold OK — {concepts.length} entries loaded.</p>
+  </body>
+</html>
