@@ -1,0 +1,93 @@
+---
+import { render } from 'astro:content';
+import Base from '../layouts/Base.astro';
+import {
+  allConcepts,
+  buildNav,
+  idToUrl,
+  type NavSection,
+} from '../lib/concepts';
+
+const all = await allConcepts();
+const sections: NavSection[] = await buildNav();
+
+// Pull the thesis body for the home framing.
+const thesis = all.find((c) => c.id === 'foundations/thesis');
+const ThesisContent = thesis ? (await render(thesis)).Content : null;
+
+// Section descriptions come from each section's index entry.
+const sectionMeta = sections.map((s) => ({
+  key: s.key,
+  label: s.label,
+  count: s.pages.length,
+  desc: s.index?.data.description ?? '',
+  url: s.index ? idToUrl(s.index.id) : `/${s.key}`,
+}));
+
+const layers = [
+  {
+    n: 'Layer 1',
+    name: 'Protocol',
+    color: 'var(--layer-protocol)',
+    desc: 'The cryptographic, identity, and permissioning substrate — DIDs, capabilities, spaces, encryption, consistency.',
+  },
+  {
+    n: 'Layer 2',
+    name: 'TinyCloud Apps',
+    color: 'var(--layer-tinycloud-app)',
+    desc: 'Manifest apps built by TinyCloud that bring data in and enshrine particular spaces.',
+  },
+  {
+    n: 'Layer 3',
+    name: 'Super-operable Applications',
+    color: 'var(--layer-application)',
+    desc: 'Top-level apps composing a user’s data across every layer into a novel experience.',
+  },
+];
+---
+<Base title="TinyCloud Protocol" rail={false}>
+  <div class="hero">
+    <div class="kicker">OKF Concept Bundle · {all.length} concepts</div>
+    <h1>Signatures Are<br />All You Need<span class="accent">.</span></h1>
+    <p class="lede">
+      TinyCloud is cryptographic access control for AI and applications. Authority is
+      a signed, attenuable capability; data lives in user-sovereign spaces; every claim
+      here traces to source. This is the human reference layer on top of the
+      agent-readable markdown bundle.
+    </p>
+  </div>
+
+  <div class="layers">
+    {layers.map((l) => (
+      <div class="layer-card" style={`--layer-c: ${l.color}`}>
+        <div class="ln">{l.n}</div>
+        <h3>{l.name}</h3>
+        <p>{l.desc}</p>
+      </div>
+    ))}
+  </div>
+
+  {ThesisContent && (
+    <>
+      <h2 class="home-h2">The Thesis</h2>
+      <article class="prose" style="max-width: 46rem;"><ThesisContent /></article>
+    </>
+  )}
+
+  <h2 class="home-h2">Sections</h2>
+  <div class="section-grid">
+    {sectionMeta.map((s) => (
+      <a class="section-tile" href={s.url}>
+        <div class="st-name">{s.label} <span class="st-count">· {s.count}</span></div>
+        {s.desc && <div class="st-desc">{s.desc}</div>}
+      </a>
+    ))}
+  </div>
+
+  <div class="agent-note">
+    <strong>For agents:</strong> the raw markdown bundle is served verbatim at
+    <a href="/llms.txt"> /llms.txt</a> and under
+    <a href="/concepts/"> /concepts/&lt;section&gt;/&lt;name&gt;.md</a>.
+    <code>concepts/</code> is the source of truth; this site renders it in place.
+  </div>
+</Base>

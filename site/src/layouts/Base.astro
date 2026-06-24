@@ -1,0 +1,31 @@
+---
+import '../styles/global.css';
+import Sidebar from '../components/Sidebar.astro';
+
+interface Props {
+  title: string;
+  description?: string;
+  currentId?: string;
+  rail?: boolean;
+}
+const { title, description, currentId, rail = true } = Astro.props;
+const fullTitle = title === 'TinyCloud Protocol' ? title : `${title} · TinyCloud Protocol`;
+---
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{fullTitle}</title>
+    {description && <meta name="description" content={description} />}
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  </head>
+  <body>
+    <div class={rail ? 'shell' : 'shell no-rail'}>
+      <Sidebar currentId={currentId} />
+      <main class="content"><slot /></main>
+      {rail && <slot name="rail" />}
+    </div>
+  </body>
+</html>
