@@ -1,0 +1,58 @@
+---
+import { buildNav, idToUrl, type NavSection } from '../lib/concepts';
+
+interface Props {
+  currentId?: string;
+}
+const { currentId } = Astro.props;
+const sections: NavSection[] = await buildNav();
+---
+<aside class="sidebar">
+  <a class="brand" href="/"><span class="mark">▍</span> TinyCloud</a>
+  <div class="brand-sub">Protocol Reference</div>
+
+  <div class="layer-filter" id="layer-filter" aria-label="Filter by layer">
+    <button data-layer="all" data-active="true">All</button>
+    <button data-layer="protocol">Protocol</button>
+    <button data-layer="tinycloud-app">App</button>
+    <button data-layer="application">L3</button>
+  </div>
+
+  <nav>
+    {sections.map((sec) => (
+      <div class="nav-section">
+        <a class="nav-head" href={sec.index ? idToUrl(sec.index.id) : '#'}>{sec.label}</a>
+        <ul>
+          {sec.pages.map((p) => (
+            <li>
+              <a
+                href={idToUrl(p.id)}
+                data-layer={p.data.layer ?? 'protocol'}
+                aria-current={p.id === currentId ? 'page' : undefined}
+              >{p.data.title}</a>
+            </li>
+          ))}
+        </ul>
+      </div>
+    ))}
+  </nav>
+</aside>
+
+<script>
+  // Layer filter: dim sidebar items + (on concept pages) is purely a nav aid.
+  const bar = document.getElementById('layer-filter');
+  if (bar) {
+    bar.addEventListener('click', (e) => {
+      const btn = (e.target as HTMLElement).closest('button');
+      if (!btn) return;
+      const layer = btn.dataset.layer;
+      bar.querySelectorAll('button').forEach((b) =>
+        b.setAttribute('data-active', String(b === btn))
+      );
+      document.querySelectorAll<HTMLElement>('.nav-section li a[data-layer]').forEach((a) => {
+        const hide = layer !== 'all' && a.dataset.layer !== layer;
+        a.parentElement!.setAttribute('data-layer-hidden', String(hide));
+      });
+    });
+  }
+</script>

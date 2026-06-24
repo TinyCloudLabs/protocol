@@ -1,0 +1,106 @@
+---
+import { render } from 'astro:content';
+import Base from '../layouts/Base.astro';
+import Badges from '../components/Badges.astro';
+import {
+  allConcepts,
+  buildBacklinks,
+  idToUrl,
+  sectionOf,
+  SECTION_LABELS,
+  isIndex,
+} from '../lib/concepts';
+
+export async function getStaticPaths() {
+  const all = await allConcepts();
+  const backlinks = await buildBacklinks();
+  return all.map((entry) => {
+    // URL param: section index -> "section"; else the full id.
+    const param = entry.id.endsWith('/index')
+      ? entry.id.slice(0, -'/index'.length)
+      : entry.id;
+    return {
+      params: { id: param },
+      props: { entry, backlinks: backlinks.get(entry.id) ?? [] },
+    };
+  });
+}
+
+const { entry, backlinks } = Astro.props;
+const { Content } = await render(entry);
+const data = entry.data;
+const section = sectionOf(entry.id);
+const sectionLabel = SECTION_LABELS[section] ?? section;
+const indexEntry = isIndex(entry);
+---
+<Base
+  title={data.title}
+  description={data.description}
+  currentId={entry.id}
+>
+  <div class="content-inner">
+    <div class="crumbs">
+      <a href="/">Protocol</a> / <a href={`/${section}`}>{sectionLabel}</a>
+      {!indexEntry && <> / {data.title}</>}
+    </div>
+
+    <Badges status={data.status} layer={data.layer} />
+
+    <h1 class="doc-title">{data.title}</h1>
+    {data.description && <p class="doc-desc">{data.description}</p>}
+
+    <article class="prose">
+      <Content />
+    </article>
+  </div>
+
+  <aside class="rail" slot="rail">
+    {data.resource && (
+      <div class="rail-block">
+        <div class="rail-label">Resource</div>
+        <div class="rail-resource">{data.resource}</div>
+      </div>
+    )}
+
+    {data.sources && data.sources.length > 0 && (
+      <div class="rail-block">
+        <div class="rail-label">Sources</div>
+        <ul>
+          {data.sources.map((s) => (
+            <li class="source">
+              <span class="repo">{s.repo}</span>
+              {s.path && <span class="path">{s.path}</span>}
+            </li>
+          ))}
+        </ul>
+      </div>
+    )}
+
+    {data.tags && data.tags.length > 0 && (
+      <div class="rail-block">
+        <div class="rail-label">Tags</div>
+        <div class="tags">
+          {data.tags.map((t) => <span class="tag">{t}</span>)}
+        </div>
+      </div>
+    )}
+
+    {backlinks.length > 0 && (
+      <div class="rail-block">
+        <div class="rail-label">Referenced by</div>
+        <ul>
+          {backlinks.map((b) => (
+            <li class="backlink"><a href={idToUrl(b.id)}>{b.title}</a></li>
+          ))}
+        </ul>
+      </div>
+    )}
+
+    {data.provenance_note && (
+      <div class="rail-block">
+        <div class="rail-label">Provenance</div>
+        <div style="color: var(--ink-dim); line-height: 1.5;">{data.provenance_note}</div>
+      </div>
+    )}
+  </aside>
+</Base>

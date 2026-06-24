@@ -1,0 +1,18 @@
+---
+interface Props {
+  status?: string;
+  layer?: string;
+}
+const { status, layer } = Astro.props;
+const layerLabel: Record<string, string> = {
+  protocol: 'Layer 1 · Protocol',
+  'tinycloud-app': 'Layer 2 · App',
+  application: 'Layer 3 · Application',
+};
+---
+{(status || layer) && (
+  <div class="badges">
+    {status && <span class={`badge status-${status}`}>{status}</span>}
+    {layer && <span class={`badge layer layer-${layer}`}>{layerLabel[layer] ?? layer}</span>}
+  </div>
+)}
