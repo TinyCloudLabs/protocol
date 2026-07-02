@@ -43,7 +43,7 @@ evidence { EvidenceRequirement {
   requirement_id: "email-domain",
   verifier:       "w3c.vc/credential/v1",
   requirements:   { type: "opencredentials.email/v1", emailDomains: ["tinycloud.xyz"] },
-  authority:      { accepted_issuers: ["did:web:issuer.tinycloud.xyz"] },
+  authority:      { accepted_issuers: ["did:web:issuer.credentials.org"] },
   freshness?:     { max_status_age_seconds }
 }}
 
@@ -57,7 +57,7 @@ Implements the `evidence{}` arm of [[policy-as-central-primitive|the `when` gram
 
 ## Example
 
-Policy `when = evidence{"email-domain"}` requiring `opencredentials.email/v1` from `did:web:issuer.tinycloud.xyz`, domain `tinycloud.xyz`. A holder presents `{ sdJwt: "<email-domain SD-JWT for sam@tinycloud.xyz>" }`. The verifier confirms the witness signature, that the credential's subject is the eligible subject, and that the disclosed *domain* is `tinycloud.xyz` — **without** the SD-JWT ever revealing `sam@`. `evaluate_expression` now sees `{"email-domain"}` satisfied, `when` passes, and a `tinycloud.sql/read` grant is issued, expiring at the credential's expiry or one hour, whichever is sooner. A wrong domain, wrong issuer, subject mismatch, expired or stale credential each fail with a distinct `evidence-*` error (the verifier's own tests cover all five).
+Policy `when = evidence{"email-domain"}` requiring `opencredentials.email/v1` from `did:web:issuer.credentials.org`, domain `tinycloud.xyz`. A holder presents `{ sdJwt: "<email-domain SD-JWT for sam@tinycloud.xyz>" }`. The verifier confirms the witness signature, that the credential's subject is the eligible subject, and that the disclosed *domain* is `tinycloud.xyz` — **without** the SD-JWT ever revealing `sam@`. `evaluate_expression` now sees `{"email-domain"}` satisfied, `when` passes, and a `tinycloud.sql/read` grant is issued, expiring at the credential's expiry or one hour, whichever is sooner. A wrong domain, wrong issuer, subject mismatch, expired or stale credential each fail with a distinct `evidence-*` error (the verifier's own tests cover all five).
 
 ## Status & drift
 
