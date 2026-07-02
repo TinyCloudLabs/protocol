@@ -31,9 +31,21 @@ The TinyCloud **js-sdk** is a monorepo of layered packages: a platform-agnostic 
 
 `web-sdk` and `node-sdk` are thin platform adapters over the shared `sdk-core` + `sdk-services`; the heavy cryptographic operations cross into `sdk-rs` (WASM). So an app targets `web-sdk` or `node-sdk`, gets the same `TinyCloud` API, and the WASM boundary handles signing/session management identically on both.
 
+## Install
+
+The `@tinycloud` packages are on npm (current line: **2.4.0**). A browser app pulls `web-sdk` + the [[openkey|OpenKey]] SDK; a backend pulls `node-sdk`:
+
+```bash
+npm install @tinycloud/web-sdk @openkey/sdk        # frontend
+npm install @tinycloud/node-sdk                    # backend
+npm install -g @tinycloud/cli                       # optional: the `tc` CLI
+```
+
+`web-sdk`/`node-sdk` re-export `sdk-core` + `sdk-services`, so you import from a single package per platform. The [[getting-started|Getting Started]] path pins these for you via [[tinyboilerplate]].
+
 ## Relationships
 
-Implements client access to all [[services]]; drives [[sign-in-flow]]; exposes [[data-apis]] and the [[delegation-api]]; the WASM layer mints the [[session-keys|session keys]] and [[siwe|SIWE]]/[[ucan|UCAN]] tokens validated by [[cacao-chain-validation]].
+Implements client access to all [[services]]; drives [[sign-in-flow]]; exposes [[data-apis]] and the [[delegation-api]]; installed and scaffolded via [[getting-started]]; the WASM layer mints the [[session-keys|session keys]] and [[siwe|SIWE]]/[[ucan|UCAN]] tokens validated by [[cacao-chain-validation]].
 
 ## Status & drift
 

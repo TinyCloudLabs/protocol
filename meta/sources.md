@@ -23,7 +23,8 @@ before authoring (see `scripts/cx`).
 | Encryption | `tinycloud-node` (`encryption.rs`, `encryption_network/`), memory `threshold-decryption-v1` |
 | Storage | `tinycloud-node` (`tinycloud-core`) |
 | Consistency | `tinycloud-node` (`replication/`, present but not mounted), `listen` |
-| Applications | `js-sdk` (`sdk-core/manifest.ts`), `openkey`, `listen` |
+| Applications | `js-sdk` (`sdk-core/manifest.ts`), `openkey`, `listen`, `tinyboilerplate` (app-starter, agent-runtime) |
+| Build (developer track) | `tinyboilerplate` (`README.md`, `packages/{client,server}`, `templates/app-starter`, `examples/notes`, `scripts/scaffold-app.ts`), `tinycloud-app-kit` (`schemas/`, `guides/`, `skills/`), npm registry (`@tinycloud/*`, `@openkey/sdk` package names/versions) |
 | Secrets | `tinycloud-node` (primitives), `js-sdk` (apps) |
 | Credentials | `openkey` (OpenCredentials, witness service), `listen` |
 | Nodes | `tinycloud-node` (`node-server`) |
