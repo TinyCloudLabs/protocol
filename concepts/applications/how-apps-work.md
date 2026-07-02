@@ -23,6 +23,10 @@ A full-shape TinyCloud app has up to **three components, each with its own [[did
 
 This is the **target architecture**. The frontend + backend path is [[example-listen|shipped and worked end-to-end]]; the agent-as-third-DID path is [[#the-agent|in progress]] (the [agent runtime](https://github.com/TinyCloudLabs/tinyboilerplate) exists and advertises its permissions the same way a backend does). Simpler apps are honest subsets of this shape (see [[#simpler-apps-are-subsets]]).
 
+![TinyCloud app architecture: App, Backend, and Agent components, each with its own scoped capabilities, all connected to a central TinyCloud cloud hosting and services hub.](/assets/how-apps-work.png)
+
+*The three components, each holding its own scoped capabilities, with TinyCloud as the shared hub. The permission scopes shown (SQL/KV read and write) are an illustrative example, not normative.*
+
 ## The three components
 
 Every component authenticates as its own [[dids|DID]] and holds only [[capabilities|capabilities]] someone delegated to it. No component is a custodian of another's key.
