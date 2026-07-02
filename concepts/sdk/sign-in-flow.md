@@ -38,9 +38,40 @@ Thereafter the [[session-keys|session key]] signs [[invocation|invocations]] wit
 
 One wallet signature (step 4) authorizes the whole [[capability-composition|composed capability set]]; the node validates the resulting chain via [[cacao-chain-validation]]. Replay is bounded by the SIWE nonce + time.
 
+## Example
+
+The [[tinyboilerplate]] frontend wires the whole flow with its client helpers: connect an [[openkey|OpenKey]] passkey, [[capability-composition|compose]] the app manifest with the backend policy, then sign in — one wallet prompt covers the composed [[capabilities|capability]] set.
+
+```ts
+import {
+  connectWallet,
+  loadAppManifest,
+  composeManifestWithBackend,
+  createAndSignIn,
+} from "@tinyboilerplate/client";
+
+const { address, web3Provider } = await connectWallet({
+  appName: "My App",
+  host: "https://openkey.so",
+});
+
+const manifest = await loadAppManifest(`${BACKEND_URL}/api/manifest`);
+const serverInfo = await (await fetch(`${BACKEND_URL}/api/server-info`)).json();
+const capabilityRequest = composeManifestWithBackend(manifest, serverInfo);
+
+const { tcw, session } = await createAndSignIn(web3Provider, {
+  address,
+  autoCreateSpace: true,
+  capabilityRequest,
+});
+// tcw.did is the owner DID; `session.siwe` + `session.signature` verify the backend session.
+```
+
+Under `@tinyboilerplate/client` this is `@tinycloud/web-sdk`'s `TinyCloudWeb.signIn()`; the `capabilityRequest` is the [[capability-composition|composed]] union so the single signature also pre-authorizes the backend [[delegation-api|delegation]]. See [[getting-started]] for the full run.
+
 ## Relationships
 
-Produces the [[session-keys|session]] + root [[delegation]] that [[capabilities]] derive from; consumes the app [[manifest-model|manifest]] (and [[capability-composition]] for app+backend); hosts the space via [[space-hosting]]; the node-side counterpart is [[cacao-chain-validation]].
+Produces the [[session-keys|session]] + root [[delegation]] that [[capabilities]] derive from; consumes the app [[manifest-model|manifest]] (and [[capability-composition]] for app+backend); driven from the browser as in [[getting-started]]; hosts the space via [[space-hosting]]; the node-side counterpart is [[cacao-chain-validation]].
 
 ## Status & drift
 

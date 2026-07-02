@@ -94,6 +94,18 @@ Listen's backend is the canonical [[tee-backends|TEE backend]]. It advertises a 
 
 The frontend folds those into the manifest as a backend delegate (same `app_id`, with a `did`, `defaults: false`) and [[capability-composition|composes app + backend into one capability request]] the user signs **once**. After sign-in the SDK *materializes* the backend's [[delegation|UCAN]] from the existing session — `tcw.materializeDelegation(backendDID, capabilityRequest)` — with **no second wallet prompt** (`packages/client/src/delegation.ts`), then POSTs the serialized [[delegation|PortableDelegation]] to `/api/delegations`. The backend activates it against the [[nodes|node]] via `node.useDelegation(...)` and reads secrets only by asking the node to decrypt under the delegated network grant (`backend/src/delegation-activation.ts`) — so it **never sees secret plaintext and never holds the owner's root key**. It also self-checks that its requested caps are a subset of what the manifest grants (`isCapabilitySubset`), which is the [[tee-backends|subset rule]] in action.
 
+### How it was built
+
+Listen is the [[how-apps-work#frontend--backend|frontend + backend]] shape, and it follows the exact path a new app follows with [[getting-started|Getting Started]] and [[tinyboilerplate]]:
+
+1. **Manifest** — author `manifest.json` ([[manifest-model]]) declaring `app_id: xyz.tinycloud.listen`, the `defaults: true` tier, the `secrets{}` block, and the one `tinycloud.hooks/subscribe` permission.
+2. **Composition** — the frontend fetches the backend's advertised policy from `/api/server-info`, turns it into a backend delegate manifest (same `app_id`, a `did`, `defaults: false`), and [[capability-composition|composes]] `[appManifest, backendManifest]` into one capability request.
+3. **Sign-in** — the user signs that composed [[siwe|SIWE]]/[[recap|ReCap]] **once** ([[sign-in-flow]]); the session key now holds the whole union and the backend `did` is pre-authorized.
+4. **Delegation** — the frontend materializes the backend's [[delegation-api|PortableDelegation]] from the session key with no second prompt (`materializeDelegation`) and POSTs it to `/api/delegations`; the backend activates it with `node.useDelegation(...)`.
+5. **Backend persistence** — using only the delegated [[capabilities|capability]], the [[tee-backends|TEE backend]] writes the `conversation`/`participant` rows to [[sql|SQL]] and the transcript blob to [[kv|KV]] in the owner's `applications` [[system-spaces|space]], decrypting `secrets` through the node.
+
+The difference between Listen and the blank starter is only the manifest, the data model, and the backend routes — the compose → sign-once → materialize → operate spine is identical.
+
 ## Shape
 
 The on-disk contract is `manifest.json` above. The runtime identity is `app_id = xyz.tinycloud.listen`; the owner DID is `did:pkh:eip155:1:<address>`; the addressable data is `tinycloud:pkh:eip155:1:<addr>:applications/{sql|kv}/xyz.tinycloud.listen/…` (see [[uri-addressing-grammar]]).

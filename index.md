@@ -13,6 +13,14 @@ timestamp: 2026-06-22
 This is an [Open Knowledge Format](SCHEMA.md) bundle. Read this catalog first, then drill into a
 section's `index.md` (progressive disclosure). Each leaf is one concept.
 
+## Build an App
+
+Want to build on TinyCloud? Start with the [Build an App](concepts/build/index.md) developer track:
+[How Apps Work](concepts/applications/how-apps-work.md) for the architecture, then
+[Getting Started](concepts/sdk/getting-started.md) for the runnable golden path (scaffold from
+[tinyboilerplate](concepts/build/tinyboilerplate.md), author a manifest per
+[tinycloud-app-kit](concepts/build/tinycloud-app-kit.md), run + verify locally, deploy).
+
 ## Foundations & Identity
 - [Foundations](concepts/foundations/index.md) — Framing, thesis, and the trust model.
 - [Identity](concepts/identity/index.md) — DIDs, SIWE sign-in, session keys, and OpenKey.
