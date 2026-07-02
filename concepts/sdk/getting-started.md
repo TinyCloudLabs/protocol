@@ -62,6 +62,10 @@ cd ../my-app && bun install && bun run generate-key && bun run build
 cp frontend/.env.example frontend/.env && bun run dev
 ```
 
+### First boot: expect one backend crash (known issue)
+
+On a brand-new `BACKEND_PRIVATE_KEY`, the **first** backend launch can crash during account bootstrap with an SDK error like `Failed to create account index schema: SQL operation requires multiple permissions (tinycloud.sql/schema, tinycloud.sql/write)...`. Under `bun run dev:app-starter`, turbo then prints `run failed` (exit 1). This is expected until the SDK fix lands ([js-sdk#300](https://github.com/TinyCloudLabs/js-sdk/issues/300)): the first attempt provisions the account, `bun --watch` restarts the backend automatically, and the **second boot succeeds**. Re-run the command (or let the watch restart finish) and confirm the backend's `/health` responds before moving on. The backend port can be overridden with the `PORT` env var.
+
 ## Author the manifest
 
 The [[manifest-model|manifest]] is the app's declarative data contract: its `app_id` namespace and the [[capabilities|capabilities]] it needs. Author it against the [[tinycloud-app-kit]] manifest v1 schema (`https://schemas.tinycloud.xyz/app-manifest/v1.json`). The app-starter's blank manifest declares one explicit KV permission:
