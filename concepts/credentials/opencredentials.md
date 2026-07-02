@@ -28,13 +28,13 @@ OpenCredentials is an [[architecture-layers#layer-2-tinycloud-apps|Layer 2 TinyC
 OpenCredentials separates two roles, mirroring the classic issuer / holder / verifier triangle:
 
 - **Issuance (witness):** the [[witness-service|witness service]] runs a `WitnessFlow` (`rust/opencredentials_witness/`) — a set of verification flows (email, DNS, GitHub, Reddit, NFT/POAP, attestation, …) selected by environment config. A frontend resolves the issuer's `did.json` and `opencredentials.json` (the discovery document — `opencredentials-protocol.md`), runs the flow's `instructions → statement → witness` round trips, and receives a credential in `jwt`, `ld`, or `sd-jwt` form.
-- **Client:** the `opencredentials-client` SDK (WASM-backed TypeScript, `js/opencredentials-client/`) drives that flow against a default witness of `https://witness.tinycloud.xyz` and parses the returned credential ([[sd-jwt-vc|`parse_sd_jwt`/`present_sd_jwt`]]).
+- **Client:** the `opencredentials-client` SDK (WASM-backed TypeScript, `js/opencredentials-client/`) drives that flow against a default witness of `https://witness.credentials.org` and parses the returned credential ([[sd-jwt-vc|`parse_sd_jwt`/`present_sd_jwt`]]).
 - **Verification:** the credential is verified independently by whoever consumes it — for TinyCloud authorization, that consumer is the [[policy-engine/overview|policy engine]]'s [[credential-gated-delegation|VC evidence verifier]].
 
 ## Shape
 
 - **Issuer DID:** `did:web:issuer.tinycloud.xyz` (the witness signs as this; its `did.json` carries the Ed25519 verification key).
-- **Witness endpoint:** `https://witness.tinycloud.xyz` (`DEFAULT_WITNESS_URL` in the client).
+- **Witness endpoint:** `https://witness.credentials.org` (`DEFAULT_WITNESS_URL` in the client).
 - **Credential formats:** `jwt`, `ld`, `sd-jwt` (`capabilities` map; default `jwt`), with [[sd-jwt-vc|SD-JWT]] the format the policy engine consumes.
 - **Discovery:** an `opencredentials.json` next to `did.json` lists supported credential types, requirements, and endpoints.
 
@@ -44,11 +44,11 @@ Issued by the [[witness-service|witness service]] (signing as `did:web:issuer.ti
 
 ## Example
 
-A user runs the OpenCredentials client against `witness.tinycloud.xyz`, completes the email-verification flow for `sam@tinycloud.xyz`, and receives an `opencredentials.email/v1` SD-JWT signed by `did:web:issuer.tinycloud.xyz`. They later present *only the email-domain disclosure* of that credential to a TinyCloud node fronted by a [[policy-as-central-primitive|Policy]] requiring a `@tinycloud.xyz` member — and receive a scoped [[capabilities|capability]] grant, never having revealed the full address.
+A user runs the OpenCredentials client against `witness.credentials.org`, completes the email-verification flow for `sam@tinycloud.xyz`, and receives an `opencredentials.email/v1` SD-JWT signed by `did:web:issuer.tinycloud.xyz`. They later present *only the email-domain disclosure* of that credential to a TinyCloud node fronted by a [[policy-as-central-primitive|Policy]] requiring a `@tinycloud.xyz` member — and receive a scoped [[capabilities|capability]] grant, never having revealed the full address.
 
 ## Status & drift
 
 `in-progress`. The witness service (axum + DStack TEE issuer derivation), the client SDK, the SD-JWT pipeline, and the email credential consumed by the policy engine are real and wired. The OpenCredentials *protocol* discovery document (`opencredentials-protocol.md`) is a broad spec covering many credential types and issuers; the **TinyCloud authorization path currently uses one credential type end-to-end** (email-domain — see [[credential-gated-delegation#status--drift]]). There is **no dedicated `credentials` system space** in the node; credentials live as ordinary portable artifacts (open design question — see [[meta/contradictions]]).
 
 ## Sources
-- `OpenCredentials`: `rust/opencredentials_witness/src/main.rs` + `config.rs` (witness flows, formats, `did:web` issuer), `js/opencredentials-client/src/opencredentials_client_wrapper.ts` (`DEFAULT_WITNESS_URL = https://witness.tinycloud.xyz`), `opencredentials-protocol.md` (discovery document)
+- `OpenCredentials`: `rust/opencredentials_witness/src/main.rs` + `config.rs` (witness flows, formats, `did:web` issuer), `js/opencredentials-client/src/opencredentials_client_wrapper.ts` (`DEFAULT_WITNESS_URL = https://witness.credentials.org`), `opencredentials-protocol.md` (discovery document)

@@ -1,7 +1,7 @@
 ---
 type: concept
 title: Witness Service
-description: The OpenCredentials issuer — an axum HTTP service at witness.tinycloud.xyz that runs verification flows and issues credentials signed as did:web:issuer.tinycloud.xyz, with its key derived inside a DStack TEE.
+description: The OpenCredentials issuer — an axum HTTP service at witness.credentials.org that runs verification flows and issues credentials signed as did:web:issuer.tinycloud.xyz, with its key derived inside a DStack TEE.
 status: in-progress
 layer: tinycloud-app
 sources:
@@ -17,7 +17,7 @@ timestamp: 2026-06-23
 
 # Witness Service
 
-The **witness service** is the [[credentials|OpenCredentials]] **issuer**: an HTTP service (deployed at `https://witness.tinycloud.xyz`) that verifies a real-world fact about a subject and, on success, signs a credential as **`did:web:issuer.tinycloud.xyz`**. It "witnesses" a claim — that the subject controls an email address, a DNS record, a GitHub account — and converts that observation into a portable [[sd-jwt-vc|SD-JWT / W3C VC]] that anyone, including the [[policy-engine/overview|policy engine]], can later verify against the issuer's published DID document.
+The **witness service** is the [[credentials|OpenCredentials]] **issuer**: an HTTP service (deployed at `https://witness.credentials.org`) that verifies a real-world fact about a subject and, on success, signs a credential as **`did:web:issuer.tinycloud.xyz`**. It "witnesses" a claim — that the subject controls an email address, a DNS record, a GitHub account — and converts that observation into a portable [[sd-jwt-vc|SD-JWT / W3C VC]] that anyone, including the [[policy-engine/overview|policy engine]], can later verify against the issuer's published DID document.
 
 ## Role
 
@@ -41,7 +41,7 @@ The Ed25519 signing key is, in production, **derived inside a DStack TEE** (`KEY
 ## Shape
 
 - **Issuer DID:** `did:web:issuer.tinycloud.xyz` (set via `DID_WEB`).
-- **Service host:** `https://witness.tinycloud.xyz` (the client's `DEFAULT_WITNESS_URL`).
+- **Service host:** `https://witness.credentials.org` (the client's `DEFAULT_WITNESS_URL`).
 - **Signature:** Ed25519 (`JsonWebKey2020` / `EdDSA`), key derived in a DStack TEE.
 - **Issuance handshake:** `instructions → statement → witness_{jwt|sd_jwt|ld}`.
 
@@ -51,11 +51,11 @@ The issuer half of [[credentials|OpenCredentials]]; signs [[sd-jwt-vc|SD-JWT / W
 
 ## Example
 
-A client `POST`s an email-verification statement to `https://witness.tinycloud.xyz`. The service runs the email flow, confirms the user controls `sam@tinycloud.xyz`, and returns from `/witness_sd_jwt` an SD-JWT credential signed by the TEE-held key of `did:web:issuer.tinycloud.xyz`. Months later the [[policy-engine/overview|policy engine]] resolves that same DID's `/.well-known/did.json`, finds the verification key, and [[credential-gated-delegation|verifies the credential]] with no further contact with the witness.
+A client `POST`s an email-verification statement to `https://witness.credentials.org`. The service runs the email flow, confirms the user controls `sam@tinycloud.xyz`, and returns from `/witness_sd_jwt` an SD-JWT credential signed by the TEE-held key of `did:web:issuer.tinycloud.xyz`. Months later the [[policy-engine/overview|policy engine]] resolves that same DID's `/.well-known/did.json`, finds the verification key, and [[credential-gated-delegation|verifies the credential]] with no further contact with the witness.
 
 ## Status & drift
 
-`in-progress`. The axum service, the route set, the DStack-derived issuer key, and `did.json` generation are implemented. Many verification flows exist in config, but the **only flow currently wired through to TinyCloud authorization is email** (the policy engine's `opencredentials.email/v1` verifier — see [[credential-gated-delegation]]). The `did:web:issuer.tinycloud.xyz` / `witness.tinycloud.xyz` hostnames reflect the intended deployment; treat exact operational endpoints as deployment config. See [[meta/contradictions]].
+`in-progress`. The axum service, the route set, the DStack-derived issuer key, and `did.json` generation are implemented. Many verification flows exist in config, but the **only flow currently wired through to TinyCloud authorization is email** (the policy engine's `opencredentials.email/v1` verifier — see [[credential-gated-delegation]]). The `did:web:issuer.tinycloud.xyz` / `witness.credentials.org` hostnames reflect the intended deployment; treat exact operational endpoints as deployment config. See [[meta/contradictions]].
 
 ## Sources
 - `OpenCredentials`: `rust/opencredentials_witness/src/main.rs` (axum routes, DStack key derivation), `rust/opencredentials_witness/src/routes.rs` (handler set), `rust/opencredentials_witness/src/config.rs` (`new_flow`, `did_document`, `did:web` issuer)
