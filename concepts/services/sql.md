@@ -25,7 +25,7 @@ A [[services|Layer 1 service]]: the protocol does not run a shared database, it 
 ## Shape
 
 - **resource** — `{spaceId}/sql[/{db}]` (a space may hold multiple named databases).
-- **abilities** — `tinycloud.sql/{query, execute, batch, …}` (read vs write split so a [[capabilities|capability]] can grant query-only).
+- **abilities** — `tinycloud.sql/{read, write, schema, admin}` (read vs write split so a [[capabilities|capability]] can grant query-only; full semantics in [[capability-reference]]).
 - **caveats** — [[attenuation|attenuations]] can restrict to specific tables/statements.
 
 ## Mechanics
@@ -38,7 +38,7 @@ A [[services|service]] over an [[autonomic-space|space]]; access granted by [[ca
 
 ## Example
 
-`tinycloud.sql/query` over `tinycloud:pkh:eip155:1:0xf39f…2266:applications/sql/xyz.tinycloud.listen/conversations` lets an [[session-keys|agent]] read Listen's conversation table — and, if the [[delegation]] carried a table caveat, *only* that table.
+`tinycloud.sql/read` over `tinycloud:pkh:eip155:1:0xf39f…2266:applications/sql/xyz.tinycloud.listen/conversations` lets an [[session-keys|agent]] read Listen's conversation table — and, if the [[delegation]] carried a table caveat, *only* that table.
 
 ## Status & drift
 
