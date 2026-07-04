@@ -12,6 +12,7 @@ The capability model — delegation, invocation, revocation, attenuation, and va
 ## Concepts
 
 - [Capabilities](capabilities.md) — Capability = resource × ability × caveats, the unit of authorization across the protocol.
+- [Capability Reference](capability-reference.md) — Every enforced ability URN by service, ability relations (no implication hierarchy), path semantics, and the three grant paths.
 - [Cap-String Grammar](cap-string-grammar.md) — Capability string form service:space:path:actions and the {namespace}.{service}/{action} ability wire form.
 - [CACAO Chain Validation](cacao-chain-validation.md) — The node's algorithm for validating a CACAO/UCAN delegation chain back to root authority.
 - [Delegation](delegation.md) — Root SIWE→CACAO (ReCap) delegations and child UCAN delegations attenuating parent scope.
