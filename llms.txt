@@ -16,6 +16,7 @@
 - [Storage](concepts/storage/index.md): Blob store, metadata DB, per-space SQL.
 - [Consistency](concepts/consistency/index.md): Epochs/DAG, conflict resolution, replication.
 - [Applications](concepts/applications/index.md): Manifests, capability composition, TEE backends.
+- [Build an App](concepts/build/index.md): The developer track — getting started, tinycloud-app-kit, tinyboilerplate.
 - [Secrets](concepts/secrets/index.md): Secrets space and encrypted vault entries.
 - [Credentials](concepts/credentials/index.md): OpenCredentials feeding the policy engine.
 - [Nodes](concepts/nodes/index.md): Node architecture, TEE/DStack, host delegations.
