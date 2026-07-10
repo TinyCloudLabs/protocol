@@ -33,7 +33,7 @@ The TinyCloud **js-sdk** is a monorepo of layered packages: a platform-agnostic 
 
 ## Install
 
-The `@tinycloud` packages are on npm (current line: **2.4.0**). A browser app pulls `web-sdk` + the [[openkey|OpenKey]] SDK; a backend pulls `node-sdk`:
+The `@tinycloud` packages are on npm (current line: **2.6.3**). A browser app pulls `web-sdk` + the [[openkey|OpenKey]] SDK; a backend pulls `node-sdk`:
 
 ```bash
 npm install @tinycloud/web-sdk @openkey/sdk        # frontend
