@@ -91,11 +91,23 @@ Change `app_id`, `name`, and the `permissions[]` to match your app's data. `defa
 
 With the dev servers up, open the frontend and walk the full [[how-apps-work|frontend + backend]] flow. This is the real acceptance check — a build or a passing unit test does **not** prove sign-in works.
 
+The **first** backend boot provisions the app's account against the canonical node and can take **~1–2 minutes**; until it finishes, the backend port refuses connections (the frontend is up in under a second, so an unresponsive `:3003` next to a live `:5175` is expected while provisioning runs). turbo may also buffer the backend's ready line, so don't wait on log output — HTTP readiness is authoritative:
+
+```bash
+# Wait for the backend (~3 min timeout), then print the app's policy surface.
+for _ in $(seq 1 90); do curl -sf http://localhost:3003/health >/dev/null && break; sleep 2; done
+curl -s http://localhost:3003/health; echo
+curl -s http://localhost:3003/api/manifest; echo
+curl -s http://localhost:3003/api/server-info; echo
+```
+
+`/health` returns `{"ok":true,...}`; the other two are the manifest and backend policy the frontend [[capability-composition|composes]] at sign-in. Once they respond, walk the flow:
+
 1. **Sign in.** Click sign in; complete the [[openkey|OpenKey]] passkey prompt at `openkey.so`. The frontend connects an EIP-1193 provider, fetches the backend policy from `/api/server-info` and the manifest from `/api/manifest`, [[capability-composition|composes]] them, and asks the wallet to sign the [[siwe|SIWE]]/[[recap|ReCap]] message **once**.
 2. **Delegate.** After sign-in the frontend materializes the backend's [[delegation-api|PortableDelegation]] from the session key (no second prompt) and `POST`s it to `/api/delegations`. The connection detail panel should show delegation status `active`.
 3. **Probe.** Type a value and save it. The backend writes it to the owner's [[kv|KV]] under `xyz.tinycloud.app-starter/probe/value` using only the delegated capability, then reads it back. If the probe round-trips, the whole [[how-apps-work#the-delegation-fan-out|fan-out]] worked.
 
-The scripted human-in-the-loop version is `bun run test:real-auth`, which opens a headed browser for you to sign in and then drives the probe with Playwright. See [[tinyboilerplate]] for the validation ladder.
+The unattended scripted check is `bun run test:browser:app-shell`, which verifies the sign-in UI renders — it succeeds silently, so exit code 0 is the signal. The scripted human-in-the-loop version is `bun run test:real-auth`, which opens a headed browser for you to sign in and then drives the probe with Playwright. See [[tinyboilerplate]] for the validation ladder.
 
 ### Local HTTPS caveat
 
