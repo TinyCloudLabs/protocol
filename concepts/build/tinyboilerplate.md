@@ -99,7 +99,7 @@ The runnable counterpart to [[tinycloud-app-kit]]; the scaffold source for [[get
 
 ## Status & drift
 
-Shipped, tracking the `@tinycloud` 2.4.0 SDK line with zero known staleness in the local dev path. Local run (frontend + backend against `openkey.so` + the canonical node) is fully working. The agent-runtime three-DID path exists as the sidecar above but the single-consent three-way fan-out is still hardening ([[how-apps-work#status--drift]]). Deploy runbooks are evolving in-repo.
+Shipped, tracking the `@tinycloud` 2.6.3 SDK line with zero known staleness in the local dev path. Local run (frontend + backend against `openkey.so` + the canonical node) is fully working. The agent-runtime three-DID path exists as the sidecar above but the single-consent three-way fan-out is still hardening ([[how-apps-work#status--drift]]). Deploy runbooks are evolving in-repo.
 
 ## Sources
 - `tinyboilerplate`: `README.md` (layout, quick start, packages, env, constraints, validation ladder), `package.json` (workspace + scripts), `packages/client/src/index.ts` (client exports), `packages/server/src/index.ts` (server exports), `scripts/scaffold-app.ts` (scaffold copy set + required flags), `packages/agent-runtime/docker/delegation-endpoint.ts` (`node.useDelegation`, `/info` server-info shape, refresh loop)

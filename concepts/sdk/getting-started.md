@@ -23,7 +23,7 @@ This is the golden path from nothing to a **working TinyCloud app running locall
 
 ## Install the SDK
 
-The client SDK is published on npm under the `@tinycloud` scope (current line: **2.4.0**). A browser app needs `@tinycloud/web-sdk`; a server/backend needs `@tinycloud/node-sdk`; both re-export the shared `@tinycloud/sdk-core`. Sign-in uses the OpenKey SDK.
+The client SDK is published on npm under the `@tinycloud` scope (current line: **2.6.3**). A browser app needs `@tinycloud/web-sdk`; a server/backend needs `@tinycloud/node-sdk`; both re-export the shared `@tinycloud/sdk-core`. Sign-in uses the OpenKey SDK.
 
 ```bash
 npm install @tinycloud/web-sdk @openkey/sdk        # frontend
@@ -49,7 +49,7 @@ bun run dev:app-starter
 ```
 
 - `bun run generate-key` writes a fresh `BACKEND_PRIVATE_KEY` into `templates/app-starter/backend/.env`. If that file already existed the generator *prints* a key instead of overwriting — paste it into `BACKEND_PRIVATE_KEY` yourself.
-- `dev:app-starter` runs the frontend on `http://localhost:5175` and the backend on `http://localhost:3003`. If trusted local certs exist at `templates/app-starter/frontend/localhost.pem` (+ key), both switch to HTTPS on the same ports.
+- `dev:app-starter` runs the frontend on `http://localhost:5175` and the backend on `http://localhost:3003`. The backend port can be overridden with the `PORT` env var. If trusted local certs exist at `templates/app-starter/frontend/localhost.pem` (+ key), both switch to HTTPS on the same ports.
 - The Notes example (`bun run dev:notes`) runs on `:5174` / `:3002` and is the reference for a real data model.
 
 To create an app **outside** the repo, use the scaffold CLI, which materializes the starter plus the shared packages it needs into a standalone workspace:
@@ -61,10 +61,6 @@ bun run scaffold:app -- --out ../my-app --app-id xyz.tinycloud.myapp \
 cd ../my-app && bun install && bun run generate-key && bun run build
 cp frontend/.env.example frontend/.env && bun run dev
 ```
-
-### First boot: expect one backend crash (known issue)
-
-On a brand-new `BACKEND_PRIVATE_KEY`, the **first** backend launch can crash during account bootstrap with an SDK error like `Failed to create account index schema: SQL operation requires multiple permissions (tinycloud.sql/schema, tinycloud.sql/write)...`. Under `bun run dev:app-starter`, turbo then prints `run failed` (exit 1). This is expected until the SDK fix lands ([js-sdk#300](https://github.com/TinyCloudLabs/js-sdk/issues/300)): the first attempt provisions the account, `bun --watch` restarts the backend automatically, and the **second boot succeeds**. Re-run the command (or let the watch restart finish) and confirm the backend's `/health` responds before moving on. The backend port can be overridden with the `PORT` env var.
 
 ## Author the manifest
 
@@ -122,9 +118,9 @@ Installs the [[packages|SDK packages]]; scaffolds from [[tinyboilerplate]] and a
 
 ## Status & drift
 
-In-progress. Local run (frontend + backend against `openkey.so` and the canonical node) is the shipped, verifiable path today and satisfies the v1 north-star. The deploy section states the blessed targets; the step-by-step Cloudflare Pages + Phala runbooks live in the [[tinyboilerplate]] repo's deployment docs (evolving). Package versions track the `@tinycloud` 2.4.0 line.
+In-progress. Local run (frontend + backend against `openkey.so` and the canonical node) is the shipped, verifiable path today and satisfies the v1 north-star. The deploy section states the blessed targets; the step-by-step Cloudflare Pages + Phala runbooks live in the [[tinyboilerplate]] repo's deployment docs (evolving). Package versions track the `@tinycloud` 2.6.3 line.
 
 ## Sources
 - `tinyboilerplate`: `README.md` (quick start, scaffold, ports, env vars, validation ladder, local HTTPS constraint), `package.json` (`dev:app-starter`, `generate-key`, `scaffold:app` scripts), `templates/app-starter/frontend/src/App.tsx` (sign-in → compose → delegate → probe flow)
 - `tinycloud-app-kit`: `README.md` (manifest + knowledge bundle contract, schema id)
-- npm: `@tinycloud/{web-sdk,node-sdk,sdk-core}` 2.4.0, `@openkey/sdk`, `@tinycloud/cli` (package names/versions verified against the registry)
+- npm: `@tinycloud/{web-sdk,node-sdk,sdk-core}` 2.6.3, `@openkey/sdk`, `@tinycloud/cli` (package names/versions verified against the registry)
