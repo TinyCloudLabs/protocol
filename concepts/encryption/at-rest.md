@@ -17,7 +17,7 @@ timestamp: 2026-06-23
 
 ## Role
 
-At-rest encryption lives in [[architecture-layers|Layer 1]] and is invisible to clients — there is no API for it. The node uses it to encrypt bytes *it* owns: delegation/invocation serializations, webhook secrets and hook tickets, and (critically) the **sealed private keys of [[encryption-networks|encryption networks]]**. So `ColumnEncryption` is both a standalone at-rest mechanism *and* the AEAD building block the network mechanism reuses — see [[encryption-networks#Mechanics]] and the [[overview]].
+At-rest encryption lives in [[architecture-layers|Layer 1]] and is invisible to clients — there is no API for it. The node uses it to encrypt bytes *it* owns: delegation/invocation serializations, webhook secrets and hook tickets, and (critically) the **sealed private keys of [[encryption-networks|encryption networks]]**. So `ColumnEncryption` is both a standalone at-rest mechanism *and* the AEAD building block the network mechanism reuses — see [[encryption-networks#mechanics]] and the [[overview]].
 
 ## Shape
 
