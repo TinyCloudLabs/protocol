@@ -68,7 +68,7 @@ Is the framing of the [[policy-engine/overview|policy engine]]; its `when` gramm
 
 ## Status & drift
 
-`in-progress`. The `Policy` type, the `when` grammar, `evaluate_expression`, and `PolicyCapability::contains` are **frozen v0 + shipped** in `policy-core`. The *framing* — permissioning as the protocol's central primitive, above storage — is the [[architecture-layers|locked]] team position; its full realization depends on [[nodes|node]] consumption of the engine, which is still design-intent (see [[overview#status--drift]]). See [[meta/contradictions]].
+`in-progress`. The `Policy` type, the `when` grammar, `evaluate_expression`, and `PolicyCapability::contains` are **frozen v0 + shipped** in `policy-core`. The *framing* — permissioning as the protocol's central primitive, above storage — is the [[architecture-layers|locked]] team position; its full realization depends on [[nodes|node]] consumption of the engine, which is still design-intent (see [[overview#status--drift]]). **Repo status:** the cited `policy-engine` repo is not public under TinyCloudLabs, and this design has been superseded by Data Exchange v0 (the `sssoforth/information-sphere` lineage); treat this page as historical context, not the current build target. See [[meta/contradictions]].
 
 ## Sources
 - `policy-engine`: `src/types.rs:49,120,77` (`Policy`, `Expression`, `GrantTemplate`), `src/evaluator.rs:76` (`evaluate_expression`), `src/capability.rs:83,124` (`PolicyCapability`, `contains`)
