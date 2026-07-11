@@ -21,7 +21,7 @@ timestamp: 2026-06-23
 
 ## Role
 
-[[policy-as-central-primitive|Policy as central primitive]] lets an owner condition authority on facts. Credential-gating is the most powerful such fact: not "is this a specific key" but "does this holder possess a credential — an email-domain, a membership — issued by a trusted [[witness-service|witness]]." Crucially, the engine **never trusts the holder's claim of satisfaction**: `evaluate_expression` only counts evidence IDs the engine itself verified ([[overview#mechanics]]), so a credential condition is a real cryptographic gate, not a flag. This is the join between [[architecture-layers|Layer 1]] permissioning and the [[credentials|OpenCredentials]] [[architecture-layers#layer-2-tinycloud-apps|Layer 2]] credential app.
+[[policy-as-central-primitive|Policy as central primitive]] lets an owner condition authority on facts. Credential-gating is the most powerful such fact: not "is this a specific key" but "does this holder possess a credential — an email-domain, a membership — issued by a trusted [[witness-service|witness]]." Crucially, the engine **never trusts the holder's claim of satisfaction**: `evaluate_expression` only counts evidence IDs the engine itself verified ([[overview#mechanics]]), so a credential condition is a real cryptographic gate, not a flag. This is the join between [[architecture-layers|Layer 1]] permissioning and the [[credentials|OpenCredentials]] [[architecture-layers#layer-2--tinycloud-apps|Layer 2]] credential app.
 
 ## Mechanics
 
@@ -53,7 +53,7 @@ PresentedEvidence { requirement_id: "email-domain", presentation: { sdJwt: "<SD-
 
 ## Relationships
 
-Implements the `evidence{}` arm of [[policy-as-central-primitive|the `when` grammar]]; verifies [[sd-jwt-vc|SD-JWT credentials]] issued by the [[witness-service|witness service]] as part of [[credentials|OpenCredentials]]; the satisfied requirement lets [[policy-engine/overview|`resolve`]] mint a [[capabilities|portable-delegation]]; runs alongside [[agent-transaction-policy|holder enrollment]]; the end-to-end framing is [[feeds-policy-engine]]; lives in [[architecture-layers|Layer 1]] consuming [[architecture-layers#layer-2-tinycloud-apps|L2]] credentials.
+Implements the `evidence{}` arm of [[policy-as-central-primitive|the `when` grammar]]; verifies [[sd-jwt-vc|SD-JWT credentials]] issued by the [[witness-service|witness service]] as part of [[credentials|OpenCredentials]]; the satisfied requirement lets [[policy-engine/overview|`resolve`]] mint a [[capabilities|portable-delegation]]; runs alongside [[agent-transaction-policy|holder enrollment]]; the end-to-end framing is [[feeds-policy-engine]]; lives in [[architecture-layers|Layer 1]] consuming [[architecture-layers#layer-2--tinycloud-apps|L2]] credentials.
 
 ## Example
 
@@ -61,7 +61,7 @@ Policy `when = evidence{"email-domain"}` requiring `opencredentials.email/v1` fr
 
 ## Status & drift
 
-`in-progress`. The verifier, the `evidence{}` grammar, and TTL-capping are **frozen v0 + shipped + tested** in `policy-evidence-vc` and `policy-runtime`. The only credential profile wired today is **email-domain** (`opencredentials.email/v1`); additional [[credentials|OpenCredentials]] credential types are design-intent. As with the whole engine, the grant it emits is honored by [[nodes|the node]] only once node consumption lands — currently the node does not consume the engine (see [[overview#status--drift]]). See [[meta/contradictions]].
+`in-progress`. The verifier, the `evidence{}` grammar, and TTL-capping are **frozen v0 + shipped + tested** in `policy-evidence-vc` and `policy-runtime`. The only credential profile wired today is **email-domain** (`opencredentials.email/v1`); additional [[credentials|OpenCredentials]] credential types are design-intent. As with the whole engine, the grant it emits is honored by [[nodes|the node]] only once node consumption lands — currently the node does not consume the engine (see [[overview#status--drift]]). **Repo status:** the cited `policy-engine` repo is not public under TinyCloudLabs, and this design has been superseded by Data Exchange v0 (the `sssoforth/information-sphere` lineage); treat this page as historical context, not the current build target. See [[meta/contradictions]].
 
 ## Sources
 - `policy-engine`: `crates/policy-evidence-vc/src/lib.rs` (`VcEvidenceVerifier::verify`, freshness, selective-disclosure tests), `src/evaluator.rs:76` (satisfied-evidence gating), `crates/policy-runtime/src/lib.rs` (`verify_evidence` + `grant_expires_at` TTL cap), `crates/policy-evidence-vc/Cargo.toml` (`opencredentials-verify` git rev c9fa2fe)

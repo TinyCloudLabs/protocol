@@ -21,7 +21,7 @@ TinyCloud has **two distinct encryption mechanisms**: (a) **[[at-rest|at-rest co
 
 Both mechanisms sit in [[architecture-layers|Layer 1]] and are implemented in `tinycloud-core`. At-rest encryption is an internal node detail: it protects bytes the node itself writes to its metadata DB. Encryption networks are a user-facing protocol surface — the [[encryption-service|encryption service]] — that lets app data be stored ciphertext-only on the node, decryptable only through a [[user-bound-decrypt|capability-gated decrypt invocation]].
 
-The defining property of the network mechanism is that it is **user-bound, not [[autonomic-space|space]]-bound**. A network's root authority is its owner [[dids|DID]] (embedded in the [[encryption-networks|network URN]]), independent of which space the ciphertext lives in. And v1 is **decrypt-only**: the node deliberately exposes no encrypt API — clients encrypt locally — so the node never holds plaintext (see [[encryption-networks#Mechanics|the module note]]).
+The defining property of the network mechanism is that it is **user-bound, not [[autonomic-space|space]]-bound**. A network's root authority is its owner [[dids|DID]] (embedded in the [[encryption-networks|network URN]]), independent of which space the ciphertext lives in. And v1 is **decrypt-only**: the node deliberately exposes no encrypt API — clients encrypt locally — so the node never holds plaintext (see [[encryption-networks#mechanics|the module note]]).
 
 ## Mechanics
 

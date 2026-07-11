@@ -19,7 +19,7 @@ An **SD-JWT VC** is the credential format [[credentials|OpenCredentials]] issues
 
 ## Role
 
-Selective disclosure is what makes credentials usable as authorization evidence without leaking data. A [[capabilities|capability]] is minimal by construction; a credential should be too. SD-JWT lets [[credentials|OpenCredentials]] issue a rich credential once (every claim digested into the signed JWT) while the holder presents only the slice a [[policy-as-central-primitive|Policy]] demands. It is the privacy hinge of the [[feeds-policy-engine|credentials→policy-engine]] pipeline, sitting in [[architecture-layers#layer-2-tinycloud-apps|Layer 2]].
+Selective disclosure is what makes credentials usable as authorization evidence without leaking data. A [[capabilities|capability]] is minimal by construction; a credential should be too. SD-JWT lets [[credentials|OpenCredentials]] issue a rich credential once (every claim digested into the signed JWT) while the holder presents only the slice a [[policy-as-central-primitive|Policy]] demands. It is the privacy hinge of the [[feeds-policy-engine|credentials→policy-engine]] pipeline, sitting in [[architecture-layers#layer-2--tinycloud-apps|Layer 2]].
 
 ## Mechanics
 
@@ -43,7 +43,7 @@ The TinyCloud credential type wired into authorization is **`opencredentials.ema
 
 ## Relationships
 
-Issued by the [[witness-service|witness service]] as part of [[credentials|OpenCredentials]]; the W3C-VC profile the [[policy-engine/overview|policy engine]] expects ([[credential-gated-delegation|`w3c.vc/credential/v1`]]); its disclosures are the holder-side privacy control feeding [[feeds-policy-engine|policy evidence]]; signed by a [[dids|did:web]] issuer and optionally key-bound to a [[dids|holder DID]]; an [[architecture-layers#layer-2-tinycloud-apps|L2]] format.
+Issued by the [[witness-service|witness service]] as part of [[credentials|OpenCredentials]]; the W3C-VC profile the [[policy-engine/overview|policy engine]] expects ([[credential-gated-delegation|`w3c.vc/credential/v1`]]); its disclosures are the holder-side privacy control feeding [[feeds-policy-engine|policy evidence]]; signed by a [[dids|did:web]] issuer and optionally key-bound to a [[dids|holder DID]]; an [[architecture-layers#layer-2--tinycloud-apps|L2]] format.
 
 ## Example
 

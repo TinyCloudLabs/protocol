@@ -13,7 +13,7 @@ timestamp: 2026-06-23
 
 # Architecture Layers
 
-TinyCloud is organized as **three layers of technology**: a base **[[#layer-1-protocol|protocol]]** (the cryptographic, identity, and permissioning substrate), **[[#layer-2-tinycloud-apps|TinyCloud apps]]** (manifest apps built by TinyCloud that bring data in and enshrine particular spaces), and **[[#layer-3-super-operable-applications|super-operable applications]]** (top-level apps that compose a user's data across every layer into a novel experience). Each layer consumes the one below it.
+TinyCloud is organized as **three layers of technology**: a base **[[#layer-1--protocol|protocol]]** (the cryptographic, identity, and permissioning substrate), **[[#layer-2--tinycloud-apps|TinyCloud apps]]** (manifest apps built by TinyCloud that bring data in and enshrine particular spaces), and **[[#layer-3--super-operable-applications|super-operable applications]]** (top-level apps that compose a user's data across every layer into a novel experience). Each layer consumes the one below it.
 
 ## Role
 

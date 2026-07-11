@@ -19,7 +19,7 @@ This is the join between the two halves of the stack: an **[[credentials|OpenCre
 
 ## Role
 
-It is what makes [[policy-as-central-primitive|policy as a primitive]] powerful — authority conditioned not on *which key* but on *what the holder can prove*. The [[credentials|credential]] app ([[architecture-layers#layer-2-tinycloud-apps|Layer 2]]) issues facts; the [[policy-engine/overview|policy engine]] ([[architecture-layers#layer-1-protocol|Layer 1]]) consumes them as gates. This concept names that pipeline so both sides link to one place.
+It is what makes [[policy-as-central-primitive|policy as a primitive]] powerful — authority conditioned not on *which key* but on *what the holder can prove*. The [[credentials|credential]] app ([[architecture-layers#layer-2--tinycloud-apps|Layer 2]]) issues facts; the [[policy-engine/overview|policy engine]] ([[architecture-layers#layer-1--protocol|Layer 1]]) consumes them as gates. This concept names that pipeline so both sides link to one place.
 
 ## Mechanics
 
@@ -36,7 +36,7 @@ Connects [[credentials|OpenCredentials]] / [[sd-jwt-vc]] / [[witness-service]] (
 
 ## Status & drift
 
-`in-progress`. The pipeline is implemented and tested in `policy-evidence-vc` + `policy-runtime` for the email-domain credential; broader credential types are design-intent. As with the whole engine, the minted grant is honored by [[nodes|the node]] only once node consumption of the policy engine lands.
+`in-progress`. The pipeline is implemented and tested in `policy-evidence-vc` + `policy-runtime` for the email-domain credential; broader credential types are design-intent. As with the whole engine, the minted grant is honored by [[nodes|the node]] only once node consumption of the policy engine lands. **Repo status:** the cited `policy-engine` repo is not public under TinyCloudLabs, and this design has been superseded by Data Exchange v0 (the `sssoforth/information-sphere` lineage); treat this page as historical context, not the current build target.
 
 ## Sources
 - `policy-engine`: `crates/policy-evidence-vc/src/lib.rs`, `crates/policy-runtime/src/lib.rs`

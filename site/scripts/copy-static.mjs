@@ -1,9 +1,10 @@
 // Copies the agent-readable source files into public/ so the build serves them
 // verbatim at the deployed site:
 //   - concepts/**/*.md  -> public/concepts/**/*.md
+//   - meta/**/*.md      -> public/meta/**/*.md
 //   - llms.txt          -> public/llms.txt
 //   - index.md, log.md  -> public/index.md, public/log.md
-// concepts/ stays the source of truth; this is a one-way copy into the build.
+// concepts/ and meta/ stay the source of truth; this is a one-way copy into the build.
 import { cp, mkdir, copyFile } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
@@ -22,6 +23,12 @@ async function run() {
     recursive: true,
   });
 
+  // Meta bundle (glossary, contradictions, sources, status) — linked from
+  // llms.txt, so it needs to be served at the same public/meta/ paths.
+  await cp(join(repoRoot, 'meta'), join(publicDir, 'meta'), {
+    recursive: true,
+  });
+
   // Top-level agent files.
   for (const name of ['llms.txt', 'index.md', 'log.md']) {
     const src = join(repoRoot, name);
@@ -30,7 +37,7 @@ async function run() {
     }
   }
 
-  console.log('[copy-static] copied concepts/, llms.txt, index.md, log.md into public/');
+  console.log('[copy-static] copied concepts/, meta/, llms.txt, index.md, log.md into public/');
 }
 
 run().catch((err) => {

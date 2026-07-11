@@ -25,11 +25,11 @@ timestamp: 2026-06-23
 
 # Example: Listen
 
-**Listen** is the canonical [[architecture-layers#layer-2-tinycloud-apps|Layer-2 TinyCloud app]]: a transcript workspace that syncs meeting transcripts (Fireflies, Granola, Google Meet) into the owner's own [[system-spaces|spaces]] and lets a [[tee-backends|TEE backend]] operate on that data through a single [[delegation|UCAN delegation]] — without the backend ever holding the owner's key or seeing secret plaintext. It is the worked example every other applications concept points to, because it exercises the whole stack: a [[manifest-model|manifest]], the `applications` [[system-spaces|space]], [[services|KV + SQL]], [[capability-composition|one-signature capability composition]], a [[tee-backends|delegate backend]], and [[secrets|encrypted secrets]].
+**Listen** is the canonical [[architecture-layers#layer-2--tinycloud-apps|Layer-2 TinyCloud app]]: a transcript workspace that syncs meeting transcripts (Fireflies, Granola, Google Meet) into the owner's own [[system-spaces|spaces]] and lets a [[tee-backends|TEE backend]] operate on that data through a single [[delegation|UCAN delegation]] — without the backend ever holding the owner's key or seeing secret plaintext. It is the worked example every other applications concept points to, because it exercises the whole stack: a [[manifest-model|manifest]], the `applications` [[system-spaces|space]], [[services|KV + SQL]], [[capability-composition|one-signature capability composition]], a [[tee-backends|delegate backend]], and [[secrets|encrypted secrets]].
 
 ## Role
 
-Listen sits in [[architecture-layers#layer-2-tinycloud-apps|Layer 2]] — a manifest app built by TinyCloud that *enshrines* a space. It is the reference instance for [[manifest-model]], [[system-spaces|the `applications` space]], and [[tee-backends]]: where those concepts describe a mechanism in the abstract, Listen is the concrete `app_id`, the concrete tables, and the concrete delegation that make them real. The read-only [[apps-feed-listen|Feed]] explorer is an [[architecture-layers#layer-3-super-operable-applications|L3]] consumer of exactly this data.
+Listen sits in [[architecture-layers#layer-2--tinycloud-apps|Layer 2]] — a manifest app built by TinyCloud that *enshrines* a space. It is the reference instance for [[manifest-model]], [[system-spaces|the `applications` space]], and [[tee-backends]]: where those concepts describe a mechanism in the abstract, Listen is the concrete `app_id`, the concrete tables, and the concrete delegation that make them real. The read-only [[apps-feed-listen|Feed]] explorer is an [[architecture-layers#layer-3--super-operable-applications|L3]] consumer of exactly this data.
 
 ## Mechanics
 
@@ -96,7 +96,7 @@ The frontend folds those into the manifest as a backend delegate (same `app_id`,
 
 ### How it was built
 
-Listen is the [[how-apps-work#frontend--backend|frontend + backend]] shape, and it follows the exact path a new app follows with [[getting-started|Getting Started]] and [[tinyboilerplate]]:
+Listen is the [[how-apps-work#simpler-apps-are-subsets|frontend + backend]] shape, and it follows the exact path a new app follows with [[getting-started|Getting Started]] and [[tinyboilerplate]]:
 
 1. **Manifest** — author `manifest.json` ([[manifest-model]]) declaring `app_id: xyz.tinycloud.listen`, the `defaults: true` tier, the `secrets{}` block, and the one `tinycloud.hooks/subscribe` permission.
 2. **Composition** — the frontend fetches the backend's advertised policy from `/api/server-info`, turns it into a backend delegate manifest (same `app_id`, a `did`, `defaults: false`), and [[capability-composition|composes]] `[appManifest, backendManifest]` into one capability request.
