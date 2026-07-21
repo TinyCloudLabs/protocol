@@ -7,7 +7,9 @@ timestamp: 2026-06-22
 
 # Bundle Schema & Conventions
 
-This bundle follows the **Open Knowledge Format (OKF) v0.1**. A bundle is a directory of markdown
+This bundle follows the **Open Knowledge Format (OKF) v0.1** — see
+[concepts/foundations/open-knowledge-format.md](concepts/foundations/open-knowledge-format.md)
+for a structured summary of OKF and how this repo maps to it. A bundle is a directory of markdown
 files; each file is one **Concept**, and a concept's **ID** is its path within the bundle minus the
 `.md` suffix.
 
