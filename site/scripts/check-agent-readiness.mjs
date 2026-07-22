@@ -3,7 +3,7 @@ import { createHash } from 'node:crypto';
 import { readFile, readdir } from 'node:fs/promises';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { onRequest } from '../../functions/_middleware.js';
+import { onRequest } from '../functions/_middleware.js';
 
 const text = (path) => readFile(new URL(path, import.meta.url), 'utf8');
 const json = async (path) => JSON.parse(await text(path));
@@ -58,5 +58,6 @@ assert.equal((sitemap.match(/<loc>/g) ?? []).length, await countIndexFiles(fileU
 
 const redirects = await text('../public/_redirects');
 assert.ok(redirects.startsWith('/.well-known/oauth-authorization-server https://api.openkey.so/.well-known/oauth-authorization-server/api/auth 302'));
+assert.match(redirects, /\/\.well-known\/oauth-protected-resource https:\/\/mcp\.tinycloud\.xyz\/\.well-known\/oauth-protected-resource\/mcp 302/);
 assert.match(await text('../public/webmcp.js'), /registerTool/);
 console.log('agent-readiness artifacts: ok');

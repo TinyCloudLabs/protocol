@@ -36,9 +36,6 @@ export async function onRequest(context) {
   if (requestUrl.pathname === '/.well-known/api-catalog') {
     headers.set('Content-Type', 'application/linkset+json; charset=utf-8');
   }
-  if (requestUrl.pathname.endsWith('.md')) {
-    headers.set('Content-Type', 'text/markdown; charset=utf-8');
-  }
   if (requestUrl.pathname.startsWith('/.well-known/agent-skills/')) {
     headers.set('Access-Control-Allow-Origin', '*');
   }
