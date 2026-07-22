@@ -1,0 +1,27 @@
+{
+  "name": "TinyCloud Protocol Navigation Agent",
+  "description": "Returns deterministic canonical TinyCloud Protocol concept and agent-readable knowledge-bundle links without accessing user data.",
+  "supportedInterfaces": [
+    {
+      "url": "https://protocol.tinycloud.xyz/a2a",
+      "protocolBinding": "HTTP+JSON",
+      "protocolVersion": "1.0"
+    }
+  ],
+  "version": "1.0.0",
+  "capabilities": {
+    "streaming": false,
+    "pushNotifications": false,
+    "extendedAgentCard": false
+  },
+  "defaultInputModes": ["text/plain"],
+  "defaultOutputModes": ["text/plain"],
+  "skills": [
+    {
+      "id": "navigate-tinycloud-protocol",
+      "name": "Navigate TinyCloud Protocol",
+      "description": "Select a canonical protocol section and its raw Markdown concept source from a plain-text topic query.",
+      "tags": ["tinycloud", "protocol", "concepts", "markdown"]
+    }
+  ]
+}
