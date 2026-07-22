@@ -6,9 +6,9 @@ This guide is for agents and MCP clients connecting to the real hosted TinyCloud
 MCP. The protocol knowledge bundle is public; OAuth is required only for tools
 that operate on a user's TinyCloud.
 
-- MCP resource: `https://mcp.tinycloud.xyz/mcp`
-- Protected-resource metadata: `https://mcp.tinycloud.xyz/.well-known/oauth-protected-resource/mcp`
-- Authorization-server metadata: `https://api.openkey.so/.well-known/oauth-authorization-server/api/auth`
+- MCP resource: [https://mcp.tinycloud.xyz/mcp](https://mcp.tinycloud.xyz/mcp)
+- Protected-resource metadata: [https://mcp.tinycloud.xyz/.well-known/oauth-protected-resource/mcp](https://mcp.tinycloud.xyz/.well-known/oauth-protected-resource/mcp)
+- Authorization-server metadata: [https://api.openkey.so/.well-known/oauth-authorization-server/api/auth](https://api.openkey.so/.well-known/oauth-authorization-server/api/auth)
 - Scope: `tinycloud:mcp`
 
 Read the live metadata before starting. The protected-resource document names
