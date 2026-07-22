@@ -1,5 +1,4 @@
 ---
-import { render } from 'astro:content';
 import Base from '../layouts/Base.astro';
 import {
   allConcepts,
@@ -11,10 +10,6 @@ import {
 const all = await allConcepts();
 const sections: NavSection[] = await buildNav();
 
-// Pull the thesis body for the home framing.
-const thesis = all.find((c) => c.id === 'foundations/thesis');
-const ThesisContent = thesis ? (await render(thesis)).Content : null;
-
 // Section descriptions come from each section's index entry.
 const sectionMeta = sections.map((s) => ({
   key: s.key,
@@ -24,65 +19,298 @@ const sectionMeta = sections.map((s) => ({
   url: s.index ? idToUrl(s.index.id) : `/${s.key}`,
 }));
 
+const principles = [
+  {
+    n: '01',
+    name: 'Own it',
+    desc: 'Hosts can store and serve a space, but the user’s key remains the root of authority over its data.',
+  },
+  {
+    n: '02',
+    name: 'Share precisely',
+    desc: 'Capabilities define who may do what, against which resource, for how long — and can be revoked.',
+  },
+  {
+    n: '03',
+    name: 'Use it everywhere',
+    desc: 'The same authorized data can follow a user across apps and agents instead of being rebuilt in every silo.',
+  },
+];
+
+const possibilities = [
+  {
+    name: 'Portable agent memory',
+    desc: 'Give an assistant approved context from conversations, notes, preferences, and prior work. Change the model without abandoning the memory.',
+    tag: 'AI + agents',
+    url: '/applications/how-apps-work#the-agent',
+  },
+  {
+    name: 'User-owned applications',
+    desc: 'Build notes, media libraries, personal CRMs, knowledge tools, and other software whose data remains with the person using it.',
+    tag: 'App data',
+    url: '/applications/how-apps-work',
+  },
+  {
+    name: 'Controlled automation',
+    desc: 'Let a backend or agent ingest data, call services, or run long tasks with a narrow delegation instead of the user’s master credentials.',
+    tag: 'Delegation',
+    url: '/applications/how-apps-work#the-delegation-fan-out',
+  },
+  {
+    name: 'Private knowledge systems',
+    desc: 'Store documents, transcripts, structured records, and secrets in one capability-gated data layer that the user’s chosen tools can query.',
+    tag: 'KV + SQL',
+    url: '/services',
+  },
+  {
+    name: 'Credential-aware experiences',
+    desc: 'Create emerging workflows where access can depend on portable proof — such as a verified identity or credential — rather than a platform account.',
+    tag: 'Emerging',
+    url: '/credentials/feeds-policy-engine',
+  },
+  {
+    name: 'Cross-app products',
+    desc: 'Turn one authorized app’s output into another app’s input, enabling feeds, copilots, and workflows no isolated data source could produce.',
+    tag: 'Super-operable',
+    url: '/foundations/architecture-layers#layer-3--super-operable-applications',
+  },
+];
+
 const layers = [
   {
     n: 'Layer 1',
     name: 'Protocol',
     color: 'var(--layer-protocol)',
-    desc: 'The cryptographic, identity, and permissioning substrate — DIDs, capabilities, spaces, encryption, consistency.',
+    desc: 'User-owned spaces, identity, capabilities, delegation, storage, encryption, and policy.',
+    url: '/foundations/architecture-layers#layer-1--protocol',
   },
   {
     n: 'Layer 2',
     name: 'TinyCloud Apps',
     color: 'var(--layer-tinycloud-app)',
-    desc: 'Manifest apps built by TinyCloud that bring data in and enshrine particular spaces.',
+    desc: 'Apps such as Listen, OpenCredentials, and Secrets bring structured data into those spaces.',
+    url: '/foundations/architecture-layers#layer-2--tinycloud-apps',
   },
   {
     n: 'Layer 3',
     name: 'Super-operable Applications',
     color: 'var(--layer-application)',
-    desc: 'Top-level apps composing a user’s data across every layer into a novel experience.',
+    desc: 'Experiences compose the user’s authorized data into something no single source could provide.',
+    url: '/foundations/architecture-layers#layer-3--super-operable-applications',
   },
 ];
+
+const consentFlow = [
+  ['01', 'Declare', 'The app describes the data and actions each component needs.'],
+  ['02', 'Consent once', 'The user approves the composed request with one signature.'],
+  ['03', 'Delegate subsets', 'The frontend fans out narrower grants to its backend and agents.'],
+  ['04', 'Invoke with proof', 'Every request carries a verifiable chain back to the owner.'],
+];
 ---
-<Base title="TinyCloud Protocol" rail={false}>
-  <div class="hero">
-    <div class="kicker">OKF Concept Bundle · {all.length} concepts</div>
-    <h1>Signatures Are<br />All You Need<span class="accent">.</span></h1>
+<Base
+  title="TinyCloud Protocol"
+  description="TinyCloud is the user-owned data layer for AI and applications: portable spaces, precise permissions, and services for building super-operable software."
+  rail={false}
+>
+  <header class="hero overview-hero">
+    <div class="kicker">TinyCloud Protocol</div>
+    <h1>The user-owned data layer for AI and applications<span class="accent">.</span></h1>
     <p class="lede">
-      TinyCloud is cryptographic access control for AI and applications. Authority is
-      a signed, attenuable capability; data lives in user-sovereign spaces; every claim
-      here traces to source. This is the human reference layer on top of the
-      agent-readable markdown bundle.
+      TinyCloud stores structured data in spaces you control, then lets you grant
+      apps, services, devices, and AI agents precisely scoped, revocable access.
+      Your data stays portable across tools, so changing an app or agent does not
+      mean starting over.
     </p>
-  </div>
+    <div class="hero-actions">
+      <a class="button button-primary" href="/foundations">Explore the protocol <span aria-hidden="true">→</span></a>
+      <a class="button" href="/build">Build an app <span aria-hidden="true">→</span></a>
+    </div>
+    <div class="proof-strip" aria-label="TinyCloud capabilities at a glance">
+      <span>User-owned spaces</span>
+      <span>KV + SQL</span>
+      <span>Scoped, revocable access</span>
+      <span>Portable across apps and agents</span>
+    </div>
+  </header>
 
-  <div class="layers">
-    {layers.map((l) => (
-      <div class="layer-card" style={`--layer-c: ${l.color}`}>
-        <div class="ln">{l.n}</div>
-        <h3>{l.name}</h3>
-        <p>{l.desc}</p>
+  <section class="overview-section" aria-labelledby="why-tinycloud">
+    <div class="section-heading">
+      <div class="section-eyebrow">Why TinyCloud</div>
+      <h2 id="why-tinycloud">Make data useful without giving it away.</h2>
+      <p>
+        AI needs structured, machine-readable context. Traditional clouds make
+        that context useful by trapping it inside a platform. TinyCloud keeps the
+        user at the root of authority: data is legible to the software they choose
+        while access stays explicit and bounded.
+      </p>
+    </div>
+    <div class="principle-grid">
+      {principles.map((principle) => (
+        <article class="principle-card">
+          <div class="card-index">{principle.n}</div>
+          <h3>{principle.name}<span class="accent">.</span></h3>
+          <p>{principle.desc}</p>
+        </article>
+      ))}
+    </div>
+  </section>
+
+  <section class="overview-section" aria-labelledby="possibilities">
+    <div class="section-heading split-heading">
+      <div>
+        <div class="section-eyebrow">What it unlocks</div>
+        <h2 id="possibilities">A data service for the agentic era.</h2>
       </div>
-    ))}
-  </div>
+      <p>
+        Use TinyCloud’s hosted services directly, or build products on the open
+        protocol. Spaces provide a common substrate for data, communication,
+        authorization, and composition.
+      </p>
+    </div>
+    <div class="possibility-grid">
+      {possibilities.map((possibility) => (
+        <a class="possibility-card" href={possibility.url}>
+          <div class="possibility-tag">{possibility.tag}</div>
+          <h3>{possibility.name}</h3>
+          <p>{possibility.desc}</p>
+          <span class="card-arrow" aria-hidden="true">→</span>
+        </a>
+      ))}
+    </div>
+    <div class="service-line">
+      <span class="service-line-label">Protocol services</span>
+      <a href="/services/kv">Key-value</a>
+      <a href="/services/sql">SQL</a>
+      <a href="/services/duckdb">Analytics</a>
+      <a href="/services/hooks">Hooks</a>
+      <a href="/services/encryption-service">Encryption</a>
+      <a href="/services/vault">Vault</a>
+    </div>
+  </section>
 
-  {ThesisContent && (
-    <>
-      <h2 class="home-h2">The Thesis</h2>
-      <article class="prose" style="max-width: 46rem;"><ThesisContent /></article>
-    </>
-  )}
-
-  <h2 class="home-h2">Sections</h2>
-  <div class="section-grid">
-    {sectionMeta.map((s) => (
-      <a class="section-tile" href={s.url}>
-        <div class="st-name">{s.label} <span class="st-count">· {s.count}</span></div>
-        {s.desc && <div class="st-desc">{s.desc}</div>}
+  <section class="overview-section super-section" aria-labelledby="super-operable">
+    <div class="super-copy">
+      <div class="section-eyebrow">Super-operable applications</div>
+      <h2 id="super-operable">Build apps that start with the user — not an empty database.</h2>
+      <p>
+        A super-operable application combines the data it creates with the user’s
+        other authorized TinyCloud data. Instead of every app owning a silo, the
+        user owns the shared substrate and grants each experience only the pieces
+        it needs.
+      </p>
+      <p>
+        A feed might combine meeting transcripts from Listen with preferences,
+        credentials, and other TinyCloud-held data. An assistant can read that same
+        approved history, write a result back, and let another app build on it — all
+        under owner-rooted permissions.
+      </p>
+      <a class="text-link" href="/foundations/architecture-layers#layer-3--super-operable-applications">
+        Explore the architecture <span aria-hidden="true">→</span>
       </a>
-    ))}
-  </div>
+    </div>
+    <div class="interop-diagram" aria-label="TinyCloud-interoperable application flow">
+      <div class="diagram-column diagram-sources">
+        <div class="diagram-label">User’s data sources</div>
+        <div class="diagram-node">Listen <small>conversations</small></div>
+        <div class="diagram-node">TinyCloud apps <small>structured app data</small></div>
+        <div class="diagram-node">Credentials + secrets <small>portable context</small></div>
+      </div>
+      <div class="diagram-arrow" aria-hidden="true">→</div>
+      <div class="diagram-core">
+        <div class="diagram-label">User-owned substrate</div>
+        <div class="core-ring">
+          <strong>TinyCloud</strong>
+          <span>spaces + capabilities</span>
+          <span>one owner</span>
+        </div>
+      </div>
+      <div class="diagram-arrow" aria-hidden="true">→</div>
+      <div class="diagram-column diagram-outcomes">
+        <div class="diagram-label">New experiences</div>
+        <div class="diagram-node">Personal feed</div>
+        <div class="diagram-node">Contextual assistant</div>
+        <div class="diagram-node">Cross-app workflow</div>
+      </div>
+      <p class="diagram-caption">
+        <strong>Super-operable = TinyCloud-interoperable.</strong> The application
+        is replaceable; the user’s data and identity persist.
+      </p>
+    </div>
+  </section>
+
+  <section class="overview-section" aria-labelledby="stack">
+    <div class="section-heading compact-heading">
+      <div class="section-eyebrow">How the stack fits together</div>
+      <h2 id="stack">Three layers, one path from ownership to experience.</h2>
+    </div>
+    <div class="layers">
+      {layers.map((layer) => (
+        <a class="layer-card" href={layer.url} style={`--layer-c: ${layer.color}`}>
+          <div class="ln">{layer.n}</div>
+          <h3>{layer.name}</h3>
+          <p>{layer.desc}</p>
+          <span class="card-arrow" aria-hidden="true">→</span>
+        </a>
+      ))}
+    </div>
+  </section>
+
+  <section class="overview-section consent-section" aria-labelledby="consent">
+    <div class="section-heading split-heading">
+      <div>
+        <div class="section-eyebrow">How authority flows</div>
+        <h2 id="consent">One consent. Least authority for every component.</h2>
+      </div>
+      <p>
+        A full TinyCloud app can compose permissions for its browser session,
+        backend, and agent, then give each identity only its approved subset. The
+        frontend + backend path is shipped; the full agent fan-out is emerging.
+      </p>
+    </div>
+    <ol class="consent-flow">
+      {consentFlow.map(([n, name, desc]) => (
+        <li>
+          <div class="flow-index">{n}</div>
+          <h3>{name}</h3>
+          <p>{desc}</p>
+        </li>
+      ))}
+    </ol>
+  </section>
+
+  <aside class="thesis-callout">
+    <div>
+      <div class="section-eyebrow">The thesis</div>
+      <h2>Signatures are all you need<span class="accent">.</span></h2>
+    </div>
+    <p>
+      TinyCloud turns authorization into something a request can carry and any
+      host can verify: a signature chain rooted in the data owner, rather than an
+      account row controlled by a platform.
+    </p>
+    <a class="button" href="/foundations/thesis">Read the thesis <span aria-hidden="true">→</span></a>
+  </aside>
+
+  <section class="overview-section catalog-section" aria-labelledby="catalog">
+    <div class="section-heading split-heading">
+      <div>
+        <div class="section-eyebrow">Open Knowledge Format</div>
+        <h2 id="catalog">Explore the protocol.</h2>
+      </div>
+      <p>
+        This reference contains {all.length} source-linked concepts covering the
+        protocol, services, application architecture, SDK, and roadmap.
+      </p>
+    </div>
+    <div class="section-grid">
+      {sectionMeta.map((section) => (
+        <a class="section-tile" href={section.url}>
+          <div class="st-name">{section.label} <span class="st-count">· {section.count}</span></div>
+          {section.desc && <div class="st-desc">{section.desc}</div>}
+        </a>
+      ))}
+    </div>
+  </section>
 
   <div class="agent-note">
     <strong>For agents:</strong> the raw markdown bundle is served verbatim at
