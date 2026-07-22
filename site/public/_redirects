@@ -1,2 +1,1 @@
 /.well-known/oauth-authorization-server https://api.openkey.so/.well-known/oauth-authorization-server/api/auth 302
-/.well-known/oauth-protected-resource https://mcp.tinycloud.xyz/.well-known/oauth-protected-resource/mcp 302

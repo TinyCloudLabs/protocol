@@ -21,6 +21,11 @@
           "href": "https://protocol.tinycloud.xyz/.well-known/agent-skills/index.json",
           "type": "application/json",
           "title": "TinyCloud Protocol Agent Skills"
+        },
+        {
+          "href": "https://protocol.tinycloud.xyz/.well-known/agent-card.json",
+          "type": "application/json",
+          "title": "TinyCloud Protocol navigation agent"
         }
       ]
     },

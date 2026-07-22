@@ -3,6 +3,7 @@ const DISCOVERY_LINKS = [
   '</.well-known/mcp/server-card.json>; rel="mcp"; type="application/json"; title="TinyCloud MCP server card"',
   '</.well-known/agent-skills/index.json>; rel="agent-skills"; type="application/json"; title="TinyCloud Protocol Agent Skills"',
   '</.well-known/api-catalog>; rel="api-catalog"; type="application/linkset+json"; title="TinyCloud Protocol API catalog"',
+  '</.well-known/agent-card.json>; rel="service-desc"; type="application/json"; title="TinyCloud Protocol navigation agent"',
   '</sitemap.xml>; rel="sitemap"; type="application/xml"; title="TinyCloud Protocol sitemap"',
 ].join(', ');
 
