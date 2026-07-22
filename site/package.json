@@ -8,10 +8,11 @@
     "predev": "node scripts/copy-static.mjs",
     "dev": "astro dev",
     "build": "astro build",
-    "postbuild": "node scripts/link-report.mjs",
+    "postbuild": "node scripts/generate-sitemap.mjs && node scripts/link-report.mjs",
     "preview": "astro preview",
     "astro": "astro",
-    "lint": "sh ../bin/lint.sh"
+    "lint": "sh ../bin/lint.sh",
+    "test:agent-readiness": "bun scripts/check-agent-readiness.mjs"
   },
   "dependencies": {
     "astro": "^5.13.0",

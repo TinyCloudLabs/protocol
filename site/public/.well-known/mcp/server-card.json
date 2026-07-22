@@ -1,0 +1,29 @@
+{
+  "serverInfo": {
+    "name": "tinycloud-mcp",
+    "version": "0.3.0"
+  },
+  "description": "Operate on user-authorized TinyCloud data through exact, revocable capabilities.",
+  "vendor": {
+    "name": "TinyCloud, Inc.",
+    "url": "https://tinycloud.xyz"
+  },
+  "url": "https://mcp.tinycloud.xyz/mcp",
+  "transport": {
+    "type": "streamable-http"
+  },
+  "authentication": {
+    "type": "oauth2"
+  },
+  "oauthProtectedResource": "https://mcp.tinycloud.xyz/.well-known/oauth-protected-resource/mcp",
+  "capabilities": {
+    "tools": true,
+    "prompts": false,
+    "resources": false
+  },
+  "links": {
+    "documentation": "https://docs.tinycloud.xyz/cli/mcp",
+    "health": "https://mcp.tinycloud.xyz/healthz",
+    "source": "https://github.com/TinyCloudLabs/js-sdk/tree/master/packages/mcp"
+  }
+}

@@ -1,0 +1,52 @@
+{
+  "linkset": [
+    {
+      "anchor": "https://protocol.tinycloud.xyz/",
+      "describedby": [
+        {
+          "href": "https://protocol.tinycloud.xyz/llms.txt",
+          "type": "text/markdown",
+          "title": "TinyCloud Protocol agent index"
+        }
+      ],
+      "sitemap": [
+        {
+          "href": "https://protocol.tinycloud.xyz/sitemap.xml",
+          "type": "application/xml",
+          "title": "TinyCloud Protocol sitemap"
+        }
+      ],
+      "service-meta": [
+        {
+          "href": "https://protocol.tinycloud.xyz/.well-known/agent-skills/index.json",
+          "type": "application/json",
+          "title": "TinyCloud Protocol Agent Skills"
+        }
+      ]
+    },
+    {
+      "anchor": "https://mcp.tinycloud.xyz/mcp",
+      "service-desc": [
+        {
+          "href": "https://protocol.tinycloud.xyz/.well-known/mcp/server-card.json",
+          "type": "application/json",
+          "title": "TinyCloud hosted MCP server card"
+        }
+      ],
+      "service-doc": [
+        {
+          "href": "https://docs.tinycloud.xyz/cli/mcp",
+          "type": "text/html",
+          "title": "TinyCloud MCP documentation"
+        }
+      ],
+      "status": [
+        {
+          "href": "https://mcp.tinycloud.xyz/healthz",
+          "type": "application/json",
+          "title": "TinyCloud hosted MCP health"
+        }
+      ]
+    }
+  ]
+}

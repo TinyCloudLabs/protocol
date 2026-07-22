@@ -1,0 +1,12 @@
+{
+  "$schema": "https://schemas.agentskills.io/discovery/0.2.0/schema.json",
+  "skills": [
+    {
+      "name": "navigate-tinycloud-protocol",
+      "type": "skill-md",
+      "description": "Navigate the TinyCloud Protocol knowledge bundle when a user asks about its identity, authorization, storage, encryption, application, or SDK concepts.",
+      "url": "/.well-known/agent-skills/navigate-tinycloud-protocol/SKILL.md",
+      "digest": "sha256:1c6980f7a4b52128b52b9216a6a39a7ac49fc6e646600d9026852ccccdf92fdd"
+    }
+  ]
+}
