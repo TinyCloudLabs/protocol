@@ -57,6 +57,21 @@ assert.match(markdownResponse.headers.get('content-type'), /^text\/markdown/);
 assert.match(markdownResponse.headers.get('vary'), /Accept/);
 assert.equal(await markdownResponse.text(), assetBody);
 
+const weightedMarkdownResponse = await onRequest({
+  request: new Request('https://protocol.tinycloud.xyz/', { headers: { Accept: 'text/html;q=0.2, text/markdown;q=0.8' } }),
+  env: { ASSETS: { fetch: () => new Response(assetBody) } },
+  next: () => { throw new Error('positive-q Markdown should use the static asset binding'); },
+});
+assert.match(weightedMarkdownResponse.headers.get('content-type'), /^text\/markdown/);
+
+const rejectedMarkdownResponse = await onRequest({
+  request: new Request('https://protocol.tinycloud.xyz/', { headers: { Accept: 'text/markdown;q=0, text/html;q=1' } }),
+  env: { ASSETS: { fetch: () => { throw new Error('q=0 Markdown must not use the static asset binding'); } } },
+  next: () => new Response('<!doctype html>', { headers: { 'Content-Type': 'text/html' } }),
+});
+assert.match(rejectedMarkdownResponse.headers.get('content-type'), /^text\/html/);
+assert.equal(await rejectedMarkdownResponse.text(), '<!doctype html>');
+
 const htmlResponse = await onRequest({
   request: new Request('https://protocol.tinycloud.xyz/', { headers: { Accept: 'text/html' } }),
   env: {},

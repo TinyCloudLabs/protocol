@@ -9,15 +9,27 @@ const DISCOVERY_LINKS = [
 
 const CONTENT_SIGNAL = 'search=yes, ai-input=yes, ai-train=no';
 
+function acceptsMarkdown(acceptHeader) {
+  if (!acceptHeader) return false;
+  return acceptHeader.split(',').some((range) => {
+    const [mediaType, ...parameters] = range.split(';').map((value) => value.trim());
+    if (mediaType.toLowerCase() !== 'text/markdown') return false;
+    const qualityParameter = parameters.find((parameter) => parameter
+      .split('=', 1)[0]
+      .trim()
+      .toLowerCase() === 'q');
+    if (!qualityParameter) return true;
+    const quality = Number(qualityParameter.slice(qualityParameter.indexOf('=') + 1).trim());
+    return Number.isFinite(quality) && quality > 0 && quality <= 1;
+  });
+}
+
 export async function onRequest(context) {
   const requestUrl = new URL(context.request.url);
-  const acceptsMarkdown = context.request.headers
-    .get('Accept')
-    ?.split(',')
-    .some((value) => value.trim().split(';', 1)[0] === 'text/markdown');
+  const wantsMarkdown = acceptsMarkdown(context.request.headers.get('Accept'));
 
   let response;
-  if (requestUrl.pathname === '/' && acceptsMarkdown) {
+  if (requestUrl.pathname === '/' && wantsMarkdown) {
     const markdownUrl = new URL('/llms.txt', requestUrl);
     response = await context.env.ASSETS.fetch(new Request(markdownUrl, context.request));
   } else {
@@ -31,7 +43,7 @@ export async function onRequest(context) {
     headers.append('Vary', 'Accept');
   }
 
-  if (requestUrl.pathname === '/' && acceptsMarkdown) {
+  if (requestUrl.pathname === '/' && wantsMarkdown) {
     headers.set('Content-Type', 'text/markdown; charset=utf-8');
   }
   if (requestUrl.pathname === '/.well-known/api-catalog') {
