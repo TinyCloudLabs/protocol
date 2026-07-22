@@ -7,7 +7,7 @@
   const name = 'search_tinycloud_protocol';
   modelContext.registerTool({
     name,
-    description: 'Search links on the current TinyCloud Protocol page by concept title or description.',
+    description: 'Search link text on the current TinyCloud Protocol page.',
     inputSchema: {
       type: 'object',
       properties: {
