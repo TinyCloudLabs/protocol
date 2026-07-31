@@ -19,6 +19,8 @@ timestamp: 2026-06-23
 
 A **TinyCloud node** is the server that hosts [[autonomic-space|spaces]] and serves their [[services|services]]. It is a **Rocket** HTTP server assembled from three crates — `tinycloud-auth` (the authorization primitives), `tinycloud-core` (the protocol engine), and `tinycloud-node-server` (the HTTP layer) — and it is deliberately **stateless about identity**: it authorizes purely from the [[capabilities|capability]] chain a request carries.
 
+> **Interactive reference:** Follow concrete write, read, SQL, delegation, revocation, public-read, and operations paths in the [TinyCloud Node Atlas](/nodes/node-architecture/atlas/). The underlying [JSON Canvas](/nodes/node-architecture/atlas/tinycloud-node.canvas) is available as a portable architecture model. This is a source-anchored reference, not a normative protocol specification.
+
 ## Role
 
 The node is the runtime of [[architecture-layers|Layer 1]]. It is where [[space-hosting|hosting]], [[cacao-chain-validation|chain validation]], [[storage|storage]], and [[services|service]] dispatch actually happen — but no business logic: it is a verifier and a store, which is what lets many nodes host the same owner's data interchangeably.

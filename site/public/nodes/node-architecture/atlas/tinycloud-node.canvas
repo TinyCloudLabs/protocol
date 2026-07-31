@@ -1,0 +1,1190 @@
+{
+  "nodes": [
+    {
+      "id": "group-client",
+      "type": "group",
+      "x": 0,
+      "y": 0,
+      "width": 480,
+      "height": 500,
+      "label": "Client + SDK",
+      "color": "#4f63a6"
+    },
+    {
+      "id": "group-ingress",
+      "type": "group",
+      "x": 520,
+      "y": 0,
+      "width": 1080,
+      "height": 500,
+      "label": "TinyCloud Node · HTTP boundary",
+      "color": "#496a88"
+    },
+    {
+      "id": "group-trust",
+      "type": "group",
+      "x": 0,
+      "y": 540,
+      "width": 750,
+      "height": 720,
+      "label": "Trust + policy plane",
+      "color": "#8b5b77"
+    },
+    {
+      "id": "group-execution",
+      "type": "group",
+      "x": 790,
+      "y": 540,
+      "width": 810,
+      "height": 720,
+      "label": "Logical execution responsibilities · coordinated by SpaceDatabase",
+      "color": "#3d7765"
+    },
+    {
+      "id": "group-persistence",
+      "type": "group",
+      "x": 0,
+      "y": 1300,
+      "width": 1600,
+      "height": 450,
+      "label": "Durable state + content",
+      "color": "#8b6845"
+    },
+    {
+      "id": "group-optional",
+      "type": "group",
+      "x": 1640,
+      "y": 0,
+      "width": 620,
+      "height": 1750,
+      "label": "Optional surfaces + operations",
+      "color": "#666b78"
+    },
+    {
+      "id": "client-app",
+      "type": "text",
+      "x": 80,
+      "y": 105,
+      "width": 320,
+      "height": 145,
+      "color": "#5971bd",
+      "text": "## Application or agent\nChooses a space, path, service, and ability. The wallet remains outside the request loop.",
+      "meta": {
+        "title": "Application or agent",
+        "kind": "Client",
+        "summary": "Chooses the resource and operation. TinyCloud clients address data with a space, service, path, and canonical ability.",
+        "responsibilities": [
+          "Express intent: get, put, delete, list, SQL, or delegation",
+          "Keep user identity and wallet control at the edge",
+          "Consume typed SDK results rather than node internals"
+        ],
+        "security": "The application does not receive ambient access. Every privileged request carries a signed, scoped invocation.",
+        "files": [
+          "repositories/js-sdk/packages/sdk-core",
+          "repositories/tinycloud-node/tinycloud-sdk-wasm/src"
+        ],
+        "tags": ["client", "intent", "space"],
+        "flows": ["kv-write", "kv-read", "sql", "delegation"]
+      }
+    },
+    {
+      "id": "sdk-session",
+      "type": "text",
+      "x": 80,
+      "y": 300,
+      "width": 320,
+      "height": 145,
+      "color": "#5971bd",
+      "text": "## SDK session + invocation\nUses an ephemeral session key and parent delegation to sign a narrowly-scoped invocation.",
+      "meta": {
+        "title": "SDK session + invocation",
+        "kind": "Client security",
+        "summary": "The SDK signs an invocation with a session key and references the delegation chain that authorizes it.",
+        "responsibilities": [
+          "Build TinyCloud resource URIs and canonical ability names",
+          "Sign with an ephemeral session key",
+          "Attach parent proof CIDs, expiry, not-before, and nonce"
+        ],
+        "security": "The wallet delegates to a session key, so repeated data operations do not require exposing or repeatedly using the wallet key.",
+        "files": [
+          "repositories/tinycloud-node/tinycloud-sdk-wasm/src/session.rs",
+          "repositories/tinycloud-node/tinycloud-auth/src/authorization.rs"
+        ],
+        "tags": ["ucan", "cacao", "siwe", "session", "nonce"],
+        "flows": ["kv-write", "kv-read", "sql", "delegation"]
+      }
+    },
+    {
+      "id": "rocket-ingress",
+      "type": "text",
+      "x": 600,
+      "y": 105,
+      "width": 300,
+      "height": 145,
+      "color": "#4e789d",
+      "text": "## Rocket routes\n`/invoke` · `/delegate` · `/revoke` · `/signed/kv` · `/public` · `/info`",
+      "meta": {
+        "title": "Rocket routes",
+        "kind": "HTTP boundary",
+        "summary": "Rocket mounts the public protocol surface and injects managed runtime state into each route handler.",
+        "responsibilities": [
+          "Match endpoints and deserialize request inputs",
+          "Attach tracing spans and response types",
+          "Map domain failures to HTTP status codes"
+        ],
+        "security": "Route guards parse authorization before protected handlers run. Public endpoints have separate constraints.",
+        "files": [
+          "repositories/tinycloud-node/tinycloud-node-server/src/lib.rs",
+          "repositories/tinycloud-node/tinycloud-node-server/src/routes/mod.rs"
+        ],
+        "tags": ["rocket", "http", "routes", "api"],
+        "flows": ["kv-write", "kv-read", "sql", "delegation", "public", "claims", "operations"]
+      }
+    },
+    {
+      "id": "auth-guard",
+      "type": "text",
+      "x": 970,
+      "y": 105,
+      "width": 260,
+      "height": 145,
+      "color": "#9c5879",
+      "text": "## Auth guard\nParses UCAN/CACAO/SIWE material and verifies the request signature.",
+      "meta": {
+        "title": "Authorization guard",
+        "kind": "Trust boundary",
+        "summary": "Protected routes only receive typed InvocationInfo, DelegationInfo, or RevocationInfo after header decoding and signature verification.",
+        "responsibilities": [
+          "Decode supported authorization encodings",
+          "Resolve signer identities and verify signatures",
+          "Return typed capability material to the handler"
+        ],
+        "security": "Malformed, unverifiable, or unsupported authorization material is rejected before business logic.",
+        "files": [
+          "repositories/tinycloud-node/tinycloud-node-server/src/authorization.rs",
+          "repositories/tinycloud-node/tinycloud-node-server/src/auth_guards.rs",
+          "repositories/tinycloud-node/tinycloud-auth/src/authorization.rs"
+        ],
+        "tags": ["signature", "ucan", "cacao", "siwe", "did"],
+        "flows": ["kv-write", "kv-read", "sql", "delegation"]
+      }
+    },
+    {
+      "id": "replay-cache",
+      "type": "text",
+      "x": 1290,
+      "y": 105,
+      "width": 240,
+      "height": 145,
+      "color": "#9c5879",
+      "text": "## Process-local replay cache\nRejects a repeated invocation within one running node process.",
+      "meta": {
+        "title": "Invocation replay cache",
+        "kind": "Security gate",
+        "summary": "The generic `/invoke` path checks an in-memory HashMap before service routing. This cache is process-local and resets when the node restarts.",
+        "responsibilities": [
+          "Derive a stable invocation identity",
+          "Atomically check and reserve first use within this process",
+          "Reject replay before any operation executes in the running process"
+        ],
+        "security": "This gate is not durable across restarts. Durable nonce/JTI controls for encryption-network and share-email flows are separate database-backed mechanisms; timestamps alone are never the only replay defense.",
+        "files": [
+          "repositories/tinycloud-node/tinycloud-node-server/src/invocation_replay.rs",
+          "repositories/tinycloud-node/tinycloud-node-server/src/routes/mod.rs"
+        ],
+        "tags": ["replay", "nonce", "security", "cache"],
+        "flows": ["kv-write", "kv-read", "sql"]
+      }
+    },
+    {
+      "id": "service-dispatch",
+      "type": "text",
+      "x": 970,
+      "y": 300,
+      "width": 560,
+      "height": 145,
+      "color": "#4e789d",
+      "text": "## Capability-aware dispatcher\nRoutes SQL and optional DuckDB capabilities to query services; all other invocations enter the KV path.",
+      "meta": {
+        "title": "Capability-aware dispatcher",
+        "kind": "Request routing",
+        "summary": "The `/invoke` handler inspects capability resources and abilities, then selects SQL, optional DuckDB, or KV handling.",
+        "responsibilities": [
+          "Recognize `tinycloud.sql/*` and optional `tinycloud.duckdb/*`",
+          "Validate KV body shape and multipart batches",
+          "Collect conditional write options and response preferences"
+        ],
+        "security": "Routing follows the signed capability set, not an unsigned client-side operation selector.",
+        "files": [
+          "repositories/tinycloud-node/tinycloud-node-server/src/routes/mod.rs"
+        ],
+        "tags": ["dispatch", "kv", "sql", "duckdb", "capability"],
+        "flows": ["kv-write", "kv-read", "sql"]
+      }
+    },
+    {
+      "id": "policy-engine",
+      "type": "text",
+      "x": 70,
+      "y": 645,
+      "width": 300,
+      "height": 165,
+      "color": "#a55e81",
+      "text": "## Policy evaluation · logical\nValidates authority, capability attenuation, resource scope, time bounds, caveats, and revocation state inside SpaceDatabase transactions.",
+      "meta": {
+        "title": "Policy evaluation",
+        "kind": "Logical authorization responsibility",
+        "summary": "SpaceDatabase transaction validation proves that the invoker is authorized for every requested resource and ability. This is a logical responsibility, not a separately deployed service.",
+        "responsibilities": [
+          "Resolve canonical capability aliases",
+          "Validate path, service, ability, and caveats",
+          "Evaluate expiry, not-before, and active revocation cutoffs"
+        ],
+        "security": "A valid signature proves authorship, not authority. Authority is established through the complete capability and proof chain.",
+        "files": [
+          "repositories/tinycloud-node/tinycloud-core/src/models/invocation.rs",
+          "repositories/tinycloud-node/tinycloud-core/src/policy_capability",
+          "repositories/tinycloud-node/tinycloud-core/src/models/revocation.rs"
+        ],
+        "tags": ["policy", "authorization", "caveat", "attenuation", "revocation"],
+        "flows": ["kv-write", "kv-read", "sql", "delegation"]
+      }
+    },
+    {
+      "id": "delegation-graph",
+      "type": "text",
+      "x": 70,
+      "y": 875,
+      "width": 300,
+      "height": 165,
+      "color": "#a55e81",
+      "text": "## Delegation graph\nPersistent proof chains: who delegated what, to whom, for which path and abilities.",
+      "meta": {
+        "title": "Delegation graph",
+        "kind": "Authorization state",
+        "summary": "Delegations and revocations form the persistent authority graph used to validate new delegations and invocations.",
+        "responsibilities": [
+          "Follow parent proof CIDs",
+          "Enforce child scope and ability subsets",
+          "Detect revoked or expired ancestors"
+        ],
+        "security": "Child delegations cannot outlive or broaden the parent authority they descend from.",
+        "files": [
+          "repositories/tinycloud-node/tinycloud-core/src/models/delegation.rs",
+          "repositories/tinycloud-node/tinycloud-core/src/relationships/parent_delegations.rs",
+          "repositories/tinycloud-node/tinycloud-core/src/models/revocation.rs"
+        ],
+        "tags": ["delegation", "proof", "cid", "parent", "revocation"],
+        "flows": ["kv-write", "kv-read", "sql", "delegation"]
+      }
+    },
+    {
+      "id": "quota-gate",
+      "type": "text",
+      "x": 420,
+      "y": 645,
+      "width": 260,
+      "height": 165,
+      "color": "#9a724a",
+      "text": "## Quota gate\nCombines configured limits with current KV + query-artifact usage.",
+      "meta": {
+        "title": "Quota gate",
+        "kind": "Resource control",
+        "summary": "Writes are bounded by public-space limits or the space-specific quota returned by the quota service/cache.",
+        "responsibilities": [
+          "Resolve the effective per-space limit",
+          "Measure combined block and SQL/DuckDB artifact usage",
+          "Reject bodies that exceed the remaining allocation"
+        ],
+        "security": "Authorization does not imply unlimited resource consumption; quota is enforced independently.",
+        "files": [
+          "repositories/tinycloud-node/tinycloud-node-server/src/quota.rs",
+          "repositories/tinycloud-node/tinycloud-node-server/src/routes/mod.rs",
+          "repositories/tinycloud-node/tinycloud-core/src/db.rs"
+        ],
+        "tags": ["quota", "size", "limit", "storage"],
+        "flows": ["kv-write", "sql"]
+      }
+    },
+    {
+      "id": "key-encryption",
+      "type": "text",
+      "x": 420,
+      "y": 875,
+      "width": 260,
+      "height": 165,
+      "color": "#a55e81",
+      "text": "## Keys + encryption\nPer-space and node keys, encrypted protocol columns, and the authenticated encryption-network decrypt service.",
+      "meta": {
+        "title": "Keys + encryption",
+        "kind": "Cryptographic runtime",
+        "summary": "The node derives host and node identities, encrypts sensitive protocol columns and webhook secrets with AES-256-GCM, and runs an authenticated encryption-network service for key ceremonies and decrypt requests.",
+        "responsibilities": [
+          "Provide deterministic node and per-space host key material",
+          "Encrypt stored invocation/delegation serializations and webhook secrets",
+          "Verify decrypt invocations, nonce use, network membership, and audit state"
+        ],
+        "security": "This does not imply transparent encryption of every KV block. Protocol-column encryption and the encryption-network decrypt API are explicit layers with separate key derivation, authorization, nonce replay checks, and audit state.",
+        "files": [
+          "repositories/tinycloud-node/tinycloud-core/src/keys.rs",
+          "repositories/tinycloud-node/tinycloud-core/src/encryption.rs",
+          "repositories/tinycloud-node/tinycloud-core/src/encryption_network",
+          "repositories/tinycloud-node/tinycloud-node-server/src/routes/encryption.rs",
+          "repositories/tinycloud-node/tinycloud-node-server/src/node_control/key_provider.rs"
+        ],
+        "tags": ["keys", "encryption", "did", "secret"],
+        "flows": ["kv-write", "kv-read", "sql", "delegation", "operations"]
+      }
+    },
+    {
+      "id": "space-boundary",
+      "type": "text",
+      "x": 420,
+      "y": 1070,
+      "width": 260,
+      "height": 140,
+      "color": "#a55e81",
+      "text": "## Space boundary\nThe user-owned authorization and storage namespace that every resource belongs to.",
+      "meta": {
+        "title": "Space boundary",
+        "kind": "Ownership model",
+        "summary": "A TinyCloud space ties a controlling DID to service namespaces, paths, capability scope, keys, quota, and persisted data.",
+        "responsibilities": [
+          "Anchor resources to a controlling DID",
+          "Partition authority, storage, keys, and usage",
+          "Provide the namespace inherited by every service path"
+        ],
+        "security": "An ability is never evaluated in the abstract; it is scoped to a resource inside a specific user-controlled space.",
+        "files": [
+          "repositories/tinycloud-node/tinycloud-auth/src/resource.rs",
+          "repositories/tinycloud-node/tinycloud-core/src/models/space.rs",
+          "repositories/tinycloud-node/tinycloud-core/src/manifest.rs"
+        ],
+        "tags": ["space", "ownership", "did", "namespace"],
+        "flows": ["kv-write", "kv-read", "sql", "delegation"]
+      }
+    },
+    {
+      "id": "content-staging",
+      "type": "text",
+      "x": 850,
+      "y": 645,
+      "width": 290,
+      "height": 165,
+      "color": "#3e846d",
+      "text": "## Content staging\nStreams write bodies into memory or temporary files while hashing and enforcing limits.",
+      "meta": {
+        "title": "Content staging",
+        "kind": "Write pipeline",
+        "summary": "KV write bodies are staged before commit, producing a hash-addressed input for the core transaction.",
+        "responsibilities": [
+          "Stream single or multipart write bodies",
+          "Apply body and remaining-quota limits",
+          "Compute immutable content hashes"
+        ],
+        "security": "Untrusted request bodies are bounded before they reach durable block storage.",
+        "files": [
+          "repositories/tinycloud-node/tinycloud-node-server/src/storage/mod.rs",
+          "repositories/tinycloud-node/tinycloud-node-server/src/routes/mod.rs",
+          "repositories/tinycloud-node/tinycloud-core/src/storage"
+        ],
+        "tags": ["staging", "stream", "hash", "multipart"],
+        "flows": ["kv-write"]
+      }
+    },
+    {
+      "id": "transaction-engine",
+      "type": "text",
+      "x": 1190,
+      "y": 645,
+      "width": 330,
+      "height": 165,
+      "color": "#3e846d",
+      "text": "## Transaction engine\nSerializes conflicting chains/objects, validates events, commits metadata, and promotes staged content.",
+      "meta": {
+        "title": "Transaction engine",
+        "kind": "Core",
+        "summary": "SpaceDatabase turns invocations, delegations, and revocations into validated events committed under database transactions.",
+        "responsibilities": [
+          "Acquire delegation-chain and mutated-object guards",
+          "Choose isolation levels for normal and conditional writes",
+          "Commit event state and immutable content consistently"
+        ],
+        "security": "Authorization validation and state mutation occur inside the transaction boundary, with revocation-chain concurrency guarded.",
+        "files": [
+          "repositories/tinycloud-node/tinycloud-core/src/db.rs",
+          "repositories/tinycloud-node/tinycloud-core/src/events"
+        ],
+        "tags": ["transaction", "events", "isolation", "commit", "locks"],
+        "flows": ["kv-write", "kv-read", "sql", "delegation"]
+      }
+    },
+    {
+      "id": "kv-service",
+      "type": "text",
+      "x": 850,
+      "y": 875,
+      "width": 220,
+      "height": 165,
+      "color": "#3e846d",
+      "text": "## KV operations · logical\n`get` · `put` · `list` · `del` · `metadata`",
+      "meta": {
+        "title": "KV operations",
+        "kind": "Logical data responsibility",
+        "summary": "SpaceDatabase coordinates authorization, metadata mutation, storage, and typed KV outcomes. This box names that logical responsibility rather than a standalone sequential service.",
+        "responsibilities": [
+          "Read immutable content by space and path",
+          "Write or delete path-to-hash metadata",
+          "Apply conditional ETag preconditions and response-size limits"
+        ],
+        "security": "Each operation is derived from an authorized capability; deprecated aliases resolve to canonical actions before dispatch.",
+        "files": [
+          "repositories/tinycloud-node/tinycloud-core/src/db.rs",
+          "repositories/tinycloud-node/tinycloud-core/src/storage"
+        ],
+        "tags": ["kv", "get", "put", "list", "delete", "metadata"],
+        "flows": ["kv-write", "kv-read"]
+      }
+    },
+    {
+      "id": "sql-service",
+      "type": "text",
+      "x": 1110,
+      "y": 875,
+      "width": 220,
+      "height": 165,
+      "color": "#3e846d",
+      "text": "## SQL service\nAuthorized statements over per-space SQLite artifacts.",
+      "meta": {
+        "title": "SQL service",
+        "kind": "Query service",
+        "summary": "The server first authorizes SQL capabilities with an empty core invocation, then executes validated statements against space-owned artifacts.",
+        "responsibilities": [
+          "Parse and classify read versus write statements",
+          "Apply capability caveats and prepared-statement facts",
+          "Return JSON results and meter artifact size"
+        ],
+        "security": "SQL parsing and authorization are separate gates; query text does not define its own authority.",
+        "files": [
+          "repositories/tinycloud-node/tinycloud-core/src/sql/service.rs",
+          "repositories/tinycloud-node/tinycloud-core/src/sql/authorizer.rs",
+          "repositories/tinycloud-node/tinycloud-node-server/src/routes/mod.rs"
+        ],
+        "tags": ["sql", "sqlite", "query", "caveats"],
+        "flows": ["sql"]
+      }
+    },
+    {
+      "id": "hook-bus",
+      "type": "text",
+      "x": 1370,
+      "y": 875,
+      "width": 150,
+      "height": 165,
+      "color": "#3e846d",
+      "text": "## Hooks\nPost-commit write events.",
+      "meta": {
+        "title": "Hook bus",
+        "kind": "Post-commit",
+        "summary": "After successful KV or query writes, the node publishes normalized events to matching subscriptions.",
+        "responsibilities": [
+          "Read committed rows after success",
+          "Publish per-space ordered write events",
+          "Queue webhook deliveries without changing commit outcome"
+        ],
+        "security": "Hooks are emitted after a successful commit, so failed or unauthorized operations do not produce external write events.",
+        "files": [
+          "repositories/tinycloud-node/tinycloud-node-server/src/hooks.rs",
+          "repositories/tinycloud-node/tinycloud-node-server/src/webhook_dispatcher.rs",
+          "repositories/tinycloud-node/tinycloud-core/src/write_hooks.rs"
+        ],
+        "tags": ["hooks", "webhook", "events", "post-commit"],
+        "flows": ["kv-write", "sql"]
+      }
+    },
+    {
+      "id": "metadata-db",
+      "type": "text",
+      "x": 70,
+      "y": 1385,
+      "width": 320,
+      "height": 250,
+      "color": "#9a724a",
+      "text": "## Metadata database\nSQLite, PostgreSQL, or MySQL stores spaces, delegations, invocations, revocations, epochs, KV pointers, tickets, and hook state.",
+      "meta": {
+        "title": "Metadata database",
+        "kind": "Durable relational state",
+        "summary": "SeaORM-backed relational state is the authoritative index for protocol events, authority chains, KV pointers, signed tickets, and operational queues.",
+        "responsibilities": [
+          "Persist protocol event history and relationship indexes",
+          "Store path-to-content-hash metadata",
+          "Provide transaction isolation and migrations"
+        ],
+        "security": "Delegations, revocations, tickets, hooks, encryption-network nonces, and share-email JTI/audit state survive restarts. The generic `/invoke` replay cache is explicitly process-local.",
+        "files": [
+          "repositories/tinycloud-node/tinycloud-core/src/models",
+          "repositories/tinycloud-node/tinycloud-core/src/migrations",
+          "repositories/tinycloud-node/tinycloud-core/src/db.rs"
+        ],
+        "tags": ["database", "seaorm", "sqlite", "postgres", "mysql"],
+        "flows": ["kv-write", "kv-read", "sql", "delegation", "claims", "public"]
+      }
+    },
+    {
+      "id": "share-email-claim",
+      "type": "text",
+      "x": 1710,
+      "y": 85,
+      "width": 480,
+      "height": 180,
+      "color": "#6c7180",
+      "text": "## Email claim + authority DAG\nOptional claim/authorize adapter with its own policy-authority graph, signed manifests, durable JTI replay state, quotas, and audit trail.",
+      "meta": {
+        "title": "Email claim + authority DAG",
+        "kind": "Optional identity bridge",
+        "summary": "The share-email surface maps verified email evidence into a DID claim through a protocol boundary that is separate from the core TinyCloud delegation DAG.",
+        "responsibilities": [
+          "Serve claim and authorization routes from signed authority material",
+          "Evaluate a separate policy-authority DAG and evidence rules",
+          "Persist one-time JTI/nonce state, quotas, invitations, and audit outcomes"
+        ],
+        "security": "Authority manifests, evidence verification, durable JTI replay protection, and quotas form an isolated boundary; an email claim does not bypass core capability authorization.",
+        "files": [
+          "repositories/tinycloud-node/tinycloud-node-server/src/share_email.rs",
+          "repositories/tinycloud-node/tinycloud-core/src/share_email",
+          "repositories/tinycloud-node/tinycloud-core/src/migrations/m20260719_000000_share_email_protocol.rs",
+          "repositories/tinycloud-node/docs/email-claim-n4-share-manifest-adapter.md"
+        ],
+        "tags": ["email", "claim", "identity", "authority-dag", "jti", "replay"],
+        "flows": ["claims"]
+      }
+    },
+    {
+      "id": "block-store",
+      "type": "text",
+      "x": 460,
+      "y": 1385,
+      "width": 320,
+      "height": 250,
+      "color": "#9a724a",
+      "text": "## Immutable block store\nLocal filesystem or S3-compatible object storage, addressed by content hash.",
+      "meta": {
+        "title": "Immutable block store",
+        "kind": "Durable content",
+        "summary": "Large KV values live in an immutable store while the relational database records which hash is current for each space and path.",
+        "responsibilities": [
+          "Promote staged content after validation",
+          "Serve hash-addressed reads",
+          "Report per-space byte usage"
+        ],
+        "security": "Separating immutable content from mutable path metadata makes integrity checks and backend substitution straightforward.",
+        "files": [
+          "repositories/tinycloud-node/tinycloud-node-server/src/storage/file_system.rs",
+          "repositories/tinycloud-node/tinycloud-node-server/src/storage/s3.rs",
+          "repositories/tinycloud-node/tinycloud-core/src/storage"
+        ],
+        "tags": ["blocks", "s3", "filesystem", "content-addressed"],
+        "flows": ["kv-write", "kv-read", "public"]
+      }
+    },
+    {
+      "id": "query-artifacts",
+      "type": "text",
+      "x": 850,
+      "y": 1385,
+      "width": 320,
+      "height": 250,
+      "color": "#9a724a",
+      "text": "## Query artifacts\nPer-space SQL and optional DuckDB database files, tracked as metered artifacts.",
+      "meta": {
+        "title": "Query artifacts",
+        "kind": "Durable query state",
+        "summary": "SQL and optional DuckDB data are stored as per-space artifacts and included in total storage accounting.",
+        "responsibilities": [
+          "Resolve database artifact paths",
+          "Persist query-engine state",
+          "Report artifact sizes to quota accounting"
+        ],
+        "security": "Artifacts are selected from the authorized space context rather than arbitrary client filesystem paths.",
+        "files": [
+          "repositories/tinycloud-node/tinycloud-core/src/database_artifacts.rs",
+          "repositories/tinycloud-node/tinycloud-core/src/sql/database.rs",
+          "repositories/tinycloud-node/tinycloud-core/src/duckdb"
+        ],
+        "tags": ["artifact", "sqlite", "duckdb", "quota"],
+        "flows": ["sql"]
+      }
+    },
+    {
+      "id": "hook-delivery",
+      "type": "text",
+      "x": 1240,
+      "y": 1385,
+      "width": 290,
+      "height": 250,
+      "color": "#9a724a",
+      "text": "## Hook delivery state\nSubscriptions, durable delivery attempts, retry timing, and terminal outcomes.",
+      "meta": {
+        "title": "Hook delivery state",
+        "kind": "Durable operations",
+        "summary": "Webhook subscriptions and delivery attempts are persisted so post-commit notifications can retry independently.",
+        "responsibilities": [
+          "Match subscriptions by space, service, ability, and prefix",
+          "Persist delivery attempts and retry state",
+          "Deactivate invalid subscriptions safely"
+        ],
+        "security": "Delivery happens outside the data transaction and never rolls back a successful user write.",
+        "files": [
+          "repositories/tinycloud-node/tinycloud-node-server/src/webhook_dispatcher.rs",
+          "repositories/tinycloud-node/tinycloud-core/src/models/hook_delivery.rs"
+        ],
+        "tags": ["webhook", "delivery", "retry", "subscription"],
+        "flows": ["kv-write", "sql"]
+      }
+    },
+    {
+      "id": "public-read",
+      "type": "text",
+      "x": 1710,
+      "y": 315,
+      "width": 480,
+      "height": 180,
+      "color": "#6c7180",
+      "text": "## Public-space reads\nUnauthenticated GET/HEAD/list only for the `public` namespace, with rate limiting, safe metadata, CORS, and strong Blake3 ETags.",
+      "meta": {
+        "title": "Public-space reads",
+        "kind": "Optional public surface",
+        "summary": "A deliberately separate route serves public namespace content without capability headers.",
+        "responsibilities": [
+          "Require the reserved public space name",
+          "Apply per-IP token-bucket rate limiting",
+          "Expose only safe metadata and cache validators"
+        ],
+        "security": "Public access is namespace-gated and read-only; it does not weaken the protected `/invoke` path.",
+        "files": [
+          "repositories/tinycloud-node/tinycloud-node-server/src/routes/public.rs"
+        ],
+        "tags": ["public", "etag", "cors", "rate-limit"],
+        "flows": ["public"]
+      }
+    },
+    {
+      "id": "signed-url",
+      "type": "text",
+      "x": 1710,
+      "y": 545,
+      "width": 480,
+      "height": 180,
+      "color": "#6c7180",
+      "text": "## Signed KV tickets\nMints an opaque, expiring bearer URL only after an authorized `kv/get` invocation; the scoped ticket is stored durably.",
+      "meta": {
+        "title": "Signed KV tickets",
+        "kind": "Delegated read surface",
+        "summary": "The node turns a capability-authorized exact-object read into a short opaque bearer URL.",
+        "responsibilities": [
+          "Attenuate authority to one space and path",
+          "Clamp expiry to invocation, parent, request, and node limits",
+          "Validate ticket scope and optional hash binding on read"
+        ],
+        "security": "The bearer URL contains no claims. Scope and expiry live in durable server-side state, and limited-use URLs are rejected until counters can be correct across nodes.",
+        "files": [
+          "repositories/tinycloud-node/tinycloud-node-server/src/signed_urls.rs",
+          "repositories/tinycloud-node/tinycloud-node-server/src/routes/mod.rs"
+        ],
+        "tags": ["signed-url", "ticket", "expiry", "bearer"],
+        "flows": ["kv-read"]
+      }
+    },
+    {
+      "id": "node-control",
+      "type": "text",
+      "x": 1710,
+      "y": 775,
+      "width": 480,
+      "height": 180,
+      "color": "#6c7180",
+      "text": "## Node control plane\nUnix-domain control surface for status, configuration, keys, and lifecycle operations.",
+      "meta": {
+        "title": "Node control plane",
+        "kind": "Operations",
+        "summary": "A local control service separates privileged node administration from the public HTTP data plane.",
+        "responsibilities": [
+          "Expose status and lifecycle commands",
+          "Manage local control paths and framing",
+          "Coordinate configured key providers"
+        ],
+        "security": "Administrative controls are separated from public protocol routes and bound to local control mechanisms.",
+        "files": [
+          "repositories/tinycloud-node/tinycloud-node-server/src/node_control"
+        ],
+        "tags": ["control-plane", "admin", "unix-socket", "keys"],
+        "flows": ["operations"]
+      }
+    },
+    {
+      "id": "link-tunnel",
+      "type": "text",
+      "x": 1710,
+      "y": 1005,
+      "width": 480,
+      "height": 180,
+      "color": "#6c7180",
+      "text": "## Link + tunnel\nOptional outbound connectivity and TLS proxying for reachable node endpoints.",
+      "meta": {
+        "title": "Link + tunnel",
+        "kind": "Networking",
+        "summary": "Link and tunnel modules establish and maintain externally reachable connections without changing the core capability model.",
+        "responsibilities": [
+          "Authenticate tunnel connections",
+          "Reconnect with bounded backoff",
+          "Proxy TLS traffic to the local node"
+        ],
+        "security": "Connectivity changes how requests reach the node, not how those requests gain authority.",
+        "files": [
+          "repositories/tinycloud-node/tinycloud-node-server/src/link",
+          "repositories/tinycloud-node/tinycloud-node-server/src/tunnel"
+        ],
+        "tags": ["tunnel", "proxy", "tls", "reconnect"],
+        "flows": ["operations"]
+      }
+    },
+    {
+      "id": "tee-attestation",
+      "type": "text",
+      "x": 1710,
+      "y": 1235,
+      "width": 480,
+      "height": 180,
+      "color": "#6c7180",
+      "text": "## TEE + attestation\nOptional dstack runtime reports enclave context and exposes attestation evidence.",
+      "meta": {
+        "title": "TEE + attestation",
+        "kind": "Verifiable deployment",
+        "summary": "When built for dstack, the node can derive runtime context from the trusted execution environment and expose attestation routes.",
+        "responsibilities": [
+          "Detect and describe TEE context",
+          "Provide attestation evidence",
+          "Integrate deployment-specific key material"
+        ],
+        "security": "Attestation helps a client verify where code is running; it complements rather than replaces capability authorization.",
+        "files": [
+          "repositories/tinycloud-node/tinycloud-node-server/src/tee.rs",
+          "repositories/tinycloud-node/tinycloud-node-server/src/dstack.rs",
+          "repositories/tinycloud-node/tinycloud-node-server/src/routes/attestation.rs"
+        ],
+        "tags": ["tee", "dstack", "attestation", "enclave"],
+        "flows": ["operations"]
+      }
+    },
+    {
+      "id": "observability",
+      "type": "text",
+      "x": 1710,
+      "y": 1465,
+      "width": 480,
+      "height": 180,
+      "color": "#6c7180",
+      "text": "## Observability\nTracing spans, structured logs, Prometheus histograms, health checks, and feature discovery.",
+      "meta": {
+        "title": "Observability",
+        "kind": "Operations",
+        "summary": "The server records request-stage timings and exposes liveness plus protocol/feature information.",
+        "responsibilities": [
+          "Instrument authorization, staging, execution, and ticket operations",
+          "Expose Prometheus metrics and health checks",
+          "Report protocol version, node DID, and enabled features"
+        ],
+        "security": "Operational signals describe behavior without logging capability secrets or private key material.",
+        "files": [
+          "repositories/tinycloud-node/tinycloud-node-server/src/tracing.rs",
+          "repositories/tinycloud-node/tinycloud-node-server/src/prometheus.rs",
+          "repositories/tinycloud-node/tinycloud-node-server/src/routes/mod.rs"
+        ],
+        "tags": ["metrics", "tracing", "health", "version"],
+        "flows": ["operations"]
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "e-client-sdk",
+      "fromNode": "client-app",
+      "fromSide": "bottom",
+      "toNode": "sdk-session",
+      "toSide": "top",
+      "label": "express intent",
+      "color": "#7185c8",
+      "meta": { "flows": ["kv-write", "kv-read", "sql", "delegation"] }
+    },
+    {
+      "id": "e-sdk-ingress",
+      "fromNode": "sdk-session",
+      "fromSide": "right",
+      "toNode": "rocket-ingress",
+      "toSide": "left",
+      "label": "signed request",
+      "color": "#7185c8",
+      "meta": { "flows": ["kv-write", "kv-read", "sql", "delegation"] }
+    },
+    {
+      "id": "e-ingress-auth",
+      "fromNode": "rocket-ingress",
+      "fromSide": "right",
+      "toNode": "auth-guard",
+      "toSide": "left",
+      "label": "protected route",
+      "color": "#a86689",
+      "meta": { "flows": ["kv-write", "kv-read", "sql", "delegation"] }
+    },
+    {
+      "id": "e-auth-replay",
+      "fromNode": "auth-guard",
+      "fromSide": "right",
+      "toNode": "replay-cache",
+      "toSide": "left",
+      "label": "verified invocation",
+      "color": "#a86689",
+      "meta": { "flows": ["kv-write", "kv-read", "sql"] }
+    },
+    {
+      "id": "e-replay-dispatch",
+      "fromNode": "replay-cache",
+      "fromSide": "bottom",
+      "toNode": "service-dispatch",
+      "toSide": "right",
+      "label": "first use",
+      "color": "#a86689",
+      "meta": { "flows": ["kv-write", "kv-read", "sql"] }
+    },
+    {
+      "id": "e-auth-policy-delegate",
+      "fromNode": "auth-guard",
+      "fromSide": "bottom",
+      "toNode": "policy-engine",
+      "toSide": "top",
+      "label": "delegation event",
+      "color": "#a86689",
+      "meta": { "flows": ["delegation"] }
+    },
+    {
+      "id": "e-dispatch-policy",
+      "fromNode": "service-dispatch",
+      "fromSide": "bottom",
+      "toNode": "policy-engine",
+      "toSide": "top",
+      "label": "authorize capabilities",
+      "color": "#a86689",
+      "meta": { "flows": ["kv-write", "kv-read", "sql"] }
+    },
+    {
+      "id": "e-policy-delegations",
+      "fromNode": "policy-engine",
+      "fromSide": "bottom",
+      "toNode": "delegation-graph",
+      "toSide": "top",
+      "label": "walk proofs",
+      "color": "#a86689",
+      "meta": { "flows": ["kv-write", "kv-read", "sql", "delegation"] }
+    },
+    {
+      "id": "e-delegations-metadata",
+      "fromNode": "delegation-graph",
+      "fromSide": "bottom",
+      "toNode": "metadata-db",
+      "toSide": "top",
+      "label": "proof + revocation state",
+      "color": "#9a724a",
+      "meta": { "flows": ["kv-write", "kv-read", "sql", "delegation"] }
+    },
+    {
+      "id": "e-policy-transaction",
+      "fromNode": "policy-engine",
+      "fromSide": "right",
+      "toNode": "transaction-engine",
+      "toSide": "left",
+      "label": "validation inside transaction",
+      "color": "#4f967d",
+      "meta": { "flows": ["kv-write", "kv-read", "delegation"] }
+    },
+    {
+      "id": "e-dispatch-quota",
+      "fromNode": "service-dispatch",
+      "fromSide": "bottom",
+      "toNode": "quota-gate",
+      "toSide": "top",
+      "label": "write-class",
+      "color": "#9a724a",
+      "meta": { "flows": ["kv-write", "sql"] }
+    },
+    {
+      "id": "e-quota-stage",
+      "fromNode": "quota-gate",
+      "fromSide": "right",
+      "toNode": "content-staging",
+      "toSide": "left",
+      "label": "remaining bytes",
+      "color": "#9a724a",
+      "meta": { "flows": ["kv-write"] }
+    },
+    {
+      "id": "e-stage-transaction",
+      "fromNode": "content-staging",
+      "fromSide": "right",
+      "toNode": "transaction-engine",
+      "toSide": "left",
+      "label": "hash + staged body",
+      "color": "#4f967d",
+      "meta": { "flows": ["kv-write"] }
+    },
+    {
+      "id": "e-transaction-kv",
+      "fromNode": "transaction-engine",
+      "fromSide": "bottom",
+      "toNode": "kv-service",
+      "toSide": "top",
+      "label": "KV outcome",
+      "color": "#4f967d",
+      "meta": { "flows": ["kv-write", "kv-read"] }
+    },
+    {
+      "id": "e-dispatch-sql",
+      "fromNode": "service-dispatch",
+      "fromSide": "bottom",
+      "toNode": "sql-service",
+      "toSide": "top",
+      "label": "SQL request",
+      "color": "#4f967d",
+      "meta": { "flows": ["sql"] }
+    },
+    {
+      "id": "e-policy-sql",
+      "fromNode": "policy-engine",
+      "fromSide": "right",
+      "toNode": "sql-service",
+      "toSide": "left",
+      "label": "empty invoke verifies auth",
+      "color": "#a86689",
+      "meta": { "flows": ["sql"] }
+    },
+    {
+      "id": "e-kv-metadata",
+      "fromNode": "kv-service",
+      "fromSide": "bottom",
+      "toNode": "metadata-db",
+      "toSide": "top",
+      "label": "path ↔ hash",
+      "color": "#9a724a",
+      "meta": { "flows": ["kv-write", "kv-read"] }
+    },
+    {
+      "id": "e-kv-blocks",
+      "fromNode": "kv-service",
+      "fromSide": "bottom",
+      "toNode": "block-store",
+      "toSide": "top",
+      "label": "immutable content",
+      "color": "#9a724a",
+      "meta": { "flows": ["kv-write", "kv-read"] }
+    },
+    {
+      "id": "e-sql-artifacts",
+      "fromNode": "sql-service",
+      "fromSide": "bottom",
+      "toNode": "query-artifacts",
+      "toSide": "top",
+      "label": "database artifact",
+      "color": "#9a724a",
+      "meta": { "flows": ["sql"] }
+    },
+    {
+      "id": "e-kv-hooks",
+      "fromNode": "kv-service",
+      "fromSide": "right",
+      "toNode": "hook-bus",
+      "toSide": "left",
+      "label": "after commit",
+      "color": "#4f967d",
+      "meta": { "flows": ["kv-write"] }
+    },
+    {
+      "id": "e-sql-hooks",
+      "fromNode": "sql-service",
+      "fromSide": "right",
+      "toNode": "hook-bus",
+      "toSide": "left",
+      "label": "write set",
+      "color": "#4f967d",
+      "meta": { "flows": ["sql"] }
+    },
+    {
+      "id": "e-hooks-delivery",
+      "fromNode": "hook-bus",
+      "fromSide": "bottom",
+      "toNode": "hook-delivery",
+      "toSide": "top",
+      "label": "durable queue",
+      "color": "#9a724a",
+      "meta": { "flows": ["kv-write", "sql"] }
+    },
+    {
+      "id": "e-keys-transaction",
+      "fromNode": "key-encryption",
+      "fromSide": "right",
+      "toNode": "transaction-engine",
+      "toSide": "left",
+      "label": "space secrets",
+      "color": "#a86689",
+      "meta": { "flows": ["kv-write", "kv-read", "sql", "delegation"] }
+    },
+    {
+      "id": "e-policy-space",
+      "fromNode": "policy-engine",
+      "fromSide": "bottom",
+      "toNode": "space-boundary",
+      "toSide": "left",
+      "label": "scope to owner",
+      "color": "#a86689",
+      "meta": { "flows": ["kv-write", "kv-read", "sql", "delegation"] }
+    },
+    {
+      "id": "e-space-transaction",
+      "fromNode": "space-boundary",
+      "fromSide": "right",
+      "toNode": "transaction-engine",
+      "toSide": "left",
+      "label": "space context",
+      "color": "#a86689",
+      "meta": { "flows": ["kv-write", "kv-read", "sql", "delegation"] }
+    },
+    {
+      "id": "e-space-metadata",
+      "fromNode": "space-boundary",
+      "fromSide": "bottom",
+      "toNode": "metadata-db",
+      "toSide": "top",
+      "label": "partition state",
+      "color": "#9a724a",
+      "meta": { "flows": ["kv-write", "kv-read", "sql", "delegation"] }
+    },
+    {
+      "id": "e-ingress-public",
+      "fromNode": "rocket-ingress",
+      "fromSide": "right",
+      "toNode": "public-read",
+      "toSide": "left",
+      "label": "public namespace",
+      "color": "#7c8292",
+      "meta": { "flows": ["public"] }
+    },
+    {
+      "id": "e-ingress-share-email",
+      "fromNode": "rocket-ingress",
+      "fromSide": "right",
+      "toNode": "share-email-claim",
+      "toSide": "left",
+      "label": "claim / authorize",
+      "color": "#7c8292",
+      "meta": { "flows": ["claims"] }
+    },
+    {
+      "id": "e-share-email-metadata",
+      "fromNode": "share-email-claim",
+      "fromSide": "bottom",
+      "toNode": "metadata-db",
+      "toSide": "right",
+      "label": "authority DAG + durable JTI",
+      "color": "#7c8292",
+      "meta": { "flows": ["claims"] }
+    },
+    {
+      "id": "e-public-blocks",
+      "fromNode": "public-read",
+      "fromSide": "bottom",
+      "toNode": "block-store",
+      "toSide": "right",
+      "label": "read + ETag",
+      "color": "#7c8292",
+      "meta": { "flows": ["public"] }
+    },
+    {
+      "id": "e-public-metadata",
+      "fromNode": "public-read",
+      "fromSide": "bottom",
+      "toNode": "metadata-db",
+      "toSide": "right",
+      "label": "resolve path metadata",
+      "color": "#7c8292",
+      "meta": { "flows": ["public"] }
+    },
+    {
+      "id": "e-auth-signed",
+      "fromNode": "auth-guard",
+      "fromSide": "right",
+      "toNode": "signed-url",
+      "toSide": "left",
+      "label": "attenuate exact read",
+      "color": "#7c8292",
+      "meta": { "flows": ["kv-read"] }
+    },
+    {
+      "id": "e-signed-metadata",
+      "fromNode": "signed-url",
+      "fromSide": "bottom",
+      "toNode": "metadata-db",
+      "toSide": "right",
+      "label": "opaque ticket",
+      "color": "#7c8292",
+      "meta": { "flows": ["kv-read"] }
+    },
+    {
+      "id": "e-signed-blocks",
+      "fromNode": "signed-url",
+      "fromSide": "bottom",
+      "toNode": "block-store",
+      "toSide": "right",
+      "label": "ticket-authorized bytes",
+      "color": "#7c8292",
+      "meta": { "flows": ["kv-read"] }
+    },
+    {
+      "id": "e-control-keys",
+      "fromNode": "node-control",
+      "fromSide": "left",
+      "toNode": "key-encryption",
+      "toSide": "right",
+      "label": "configured provider",
+      "color": "#7c8292",
+      "meta": { "flows": ["operations"] }
+    },
+    {
+      "id": "e-link-ingress",
+      "fromNode": "link-tunnel",
+      "fromSide": "left",
+      "toNode": "rocket-ingress",
+      "toSide": "right",
+      "label": "proxied traffic",
+      "color": "#7c8292",
+      "meta": { "flows": ["operations"] }
+    },
+    {
+      "id": "e-tee-keys",
+      "fromNode": "tee-attestation",
+      "fromSide": "left",
+      "toNode": "key-encryption",
+      "toSide": "right",
+      "label": "runtime evidence",
+      "color": "#7c8292",
+      "meta": { "flows": ["operations"] }
+    },
+    {
+      "id": "e-observe-ingress",
+      "fromNode": "observability",
+      "fromSide": "left",
+      "toNode": "rocket-ingress",
+      "toSide": "right",
+      "label": "spans + metrics",
+      "color": "#7c8292",
+      "meta": { "flows": ["operations"] }
+    }
+  ]
+}
