@@ -15,3 +15,4 @@ Framing, thesis, and the trust model that motivate the TinyCloud protocol.
 - [Sovereign Data](sovereign-data.md) — Hold and share data without platforms, the way Bitcoin lets people hold value without banks.
 - [Architecture Layers](architecture-layers.md) — The locked three-layer model: protocol (L1), TinyCloud apps (L2), and super-operable applications (L3).
 - [Trust Model](trust-model.md) — Sovereign core / exosuit / harness positioning and the threat model the protocol defends against.
+- [Open Knowledge Format (OKF)](open-knowledge-format.md) — The agent-readable bundle format this repository uses: markdown concepts with YAML frontmatter, index files, cross-links, and citations.

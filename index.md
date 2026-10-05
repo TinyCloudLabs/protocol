@@ -51,3 +51,4 @@ Want to build on TinyCloud? Start with the [Build an App](concepts/build/index.m
 - [Contradictions](meta/contradictions.md) — Tracked spec-vs-impl divergences.
 - [Sources](meta/sources.md) — Provenance map and known gaps.
 - [Status](meta/status.md) — Shipped / in-progress / planned matrix.
+- [Open Knowledge Format](concepts/foundations/open-knowledge-format.md) — The bundle format this repo uses; how OKF constructs map to this repo's files.

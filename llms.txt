@@ -7,6 +7,7 @@
 ## Sections
 
 - [Foundations](concepts/foundations/index.md): Framing, thesis, and trust model.
+- [Open Knowledge Format (OKF)](concepts/foundations/open-knowledge-format.md): The bundle format this repo uses — markdown concepts with frontmatter, index files, cross-links, citations.
 - [Identity](concepts/identity/index.md): DIDs, SIWE, session keys, OpenKey.
 - [Spaces](concepts/spaces/index.md): The autonomic space primitive, addressing grammar, hosting.
 - [Authorization](concepts/authorization/index.md): Capabilities, delegation, invocation, CACAO validation.
