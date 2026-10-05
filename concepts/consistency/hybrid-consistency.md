@@ -23,7 +23,7 @@ It is the team's stated consistency philosophy for [[consistency-model|authoriza
 
 ## Mechanics (intended vs current)
 
-- **Strong, local (shipped):** every [[invocation]] is authorized synchronously against the node's current view ([[auth_guards.rs|`auth_guards`]]); writes are ordered as [[epochs-dag|epoch events]].
+- **Strong, local (shipped):** every [[invocation]] is authorized synchronously against the node's current view ([[node-architecture|`auth_guards`]]); writes are ordered as [[epochs-dag|epoch events]].
 - **Eventual, distributed (design-intent):** cross-peer convergence rides on [[conflict-resolution|LWW]] over the DAG via the [[replication]] subsystem — which is **present but not mounted**, so today the system is effectively single-node-strong.
 
 ## Relationships

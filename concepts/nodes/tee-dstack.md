@@ -27,11 +27,11 @@ The TEE is what makes the node a trustworthy place to do [[user-bound-decrypt|ca
 
 ## Relationships
 
-Hosts the [[nodes|node]] runtime; protects [[encryption-networks]] keys + [[user-bound-decrypt|decryption]]; the trust basis described in [[trust-model]]; precondition for the planned [[threshold-decryption]] (which removes the single-node trust assumption).
+Hosts the [[nodes|node]] runtime; protects [[encryption-networks]] keys + [[user-bound-decrypt|decryption]]; the trust basis described in [[trust-model]]; precondition for the planned [[encryption/threshold-decryption|threshold decryption]] (which removes the single-node trust assumption).
 
 ## Status & drift
 
-Shipped — nodes are currently deployed via DStack. The single-enclave model (`n=1,t=1`) is what [[threshold-decryption]] is designed to generalize beyond.
+Shipped — nodes are currently deployed via DStack. The single-enclave model (`n=1,t=1`) is what [[encryption/threshold-decryption|threshold decryption]] is designed to generalize beyond.
 
 ## Sources
 - `tinycloud-node`: `tinycloud-node-server/src/dstack.rs`, `routes/attestation.rs`
