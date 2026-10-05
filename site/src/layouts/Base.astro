@@ -22,9 +22,10 @@ const fullTitle = title === 'TinyCloud Protocol' ? title : `${title} · TinyClou
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   </head>
   <body>
+    <a class="skip-link" href="#main-content">Skip to content</a>
     <div class={rail ? 'shell' : 'shell no-rail'}>
       <Sidebar currentId={currentId} />
-      <main class="content"><slot /></main>
+      <main class="content" id="main-content"><slot /></main>
       {rail && <slot name="rail" />}
     </div>
     <script is:inline src="/webmcp.js"></script>

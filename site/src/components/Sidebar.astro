@@ -11,34 +11,51 @@ const sections: NavSection[] = await buildNav();
   <a class="brand" href="/"><span class="mark">▍</span> TinyCloud</a>
   <div class="brand-sub">Protocol Reference</div>
 
-  <div class="layer-filter" id="layer-filter" aria-label="Filter by layer">
-    <button data-layer="all" data-active="true">All</button>
-    <button data-layer="protocol">Protocol</button>
-    <button data-layer="tinycloud-app">App</button>
-    <button data-layer="application">L3</button>
-  </div>
-
-  <nav>
-    {sections.map((sec) => (
-      <div class="nav-section">
-        <a class="nav-head" href={sec.index ? idToUrl(sec.index.id) : '#'}>{sec.label}</a>
-        <ul>
-          {sec.pages.map((p) => (
-            <li>
-              <a
-                href={idToUrl(p.id)}
-                data-layer={p.data.layer ?? 'protocol'}
-                aria-current={p.id === currentId ? 'page' : undefined}
-              >{p.data.title}</a>
-            </li>
-          ))}
-        </ul>
+  <details class="sidebar-menu" open>
+    <summary>Browse the reference</summary>
+    <div class="sidebar-menu-content">
+      <div class="layer-filter" id="layer-filter" aria-label="Filter by layer">
+        <button type="button" data-layer="all" data-active="true" aria-pressed="true">All</button>
+        <button type="button" data-layer="protocol" data-active="false" aria-pressed="false">Protocol</button>
+        <button type="button" data-layer="tinycloud-app" data-active="false" aria-pressed="false">App</button>
+        <button type="button" data-layer="application" data-active="false" aria-pressed="false">L3</button>
       </div>
-    ))}
-  </nav>
+
+      <nav aria-label="Protocol reference">
+        {sections.map((sec) => (
+          <div class="nav-section">
+            <a class="nav-head" href={sec.index ? idToUrl(sec.index.id) : '#'}>{sec.label}</a>
+            <ul>
+              {sec.pages.map((p) => (
+                <li>
+                  <a
+                    href={idToUrl(p.id)}
+                    data-layer={p.data.layer ?? 'protocol'}
+                    aria-current={p.id === currentId ? 'page' : undefined}
+                  >{p.data.title}</a>
+                </li>
+              ))}
+            </ul>
+          </div>
+        ))}
+      </nav>
+    </div>
+  </details>
 </aside>
 
 <script>
+  // Keep the full reference visible on desktop; collapse it before mobile readers
+  // reach the long navigation list.
+  const menu = document.querySelector<HTMLDetailsElement>('.sidebar-menu');
+  const compactNav = window.matchMedia('(max-width: 760px)');
+  const syncMenu = (compact: boolean) => {
+    if (!menu) return;
+    if (compact) menu.removeAttribute('open');
+    else menu.setAttribute('open', '');
+  };
+  syncMenu(compactNav.matches);
+  compactNav.addEventListener('change', (event) => syncMenu(event.matches));
+
   // Layer filter: dim sidebar items + (on concept pages) is purely a nav aid.
   const bar = document.getElementById('layer-filter');
   if (bar) {
@@ -46,9 +63,11 @@ const sections: NavSection[] = await buildNav();
       const btn = (e.target as HTMLElement).closest('button');
       if (!btn) return;
       const layer = btn.dataset.layer;
-      bar.querySelectorAll('button').forEach((b) =>
-        b.setAttribute('data-active', String(b === btn))
-      );
+      bar.querySelectorAll('button').forEach((b) => {
+        const active = b === btn;
+        b.setAttribute('data-active', String(active));
+        b.setAttribute('aria-pressed', String(active));
+      });
       document.querySelectorAll<HTMLElement>('.nav-section li a[data-layer]').forEach((a) => {
         const hide = layer !== 'all' && a.dataset.layer !== layer;
         a.parentElement!.setAttribute('data-layer-hidden', String(hide));
