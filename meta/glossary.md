@@ -31,7 +31,7 @@ Canonical vocabulary. Prefer the canonical term; retired aliases are listed for 
 | Manifest | **Manifest** | App/data contract declaring namespace, space, perms, and optional delegation target. |
 | Session | **Session** | A `did:key` session key plus the owner's root grant to it; 30 days by default since SDK 3.0. |
 | Primary key | **Primary key** | The OpenKey key an account uses by default; each key is a separate owner. |
-| Device authorization | **Device authorization** | OpenKey approval of a CLI/agent session on another device; KV-only, one space, ≤30 days. |
+| Device authorization | **Device authorization** | OpenKey approval of a CLI/agent session on another device; KV data access (plus `capabilities/read`) in one space, ≤30 days. |
 | Delegate profile | **Delegate profile** | A CLI/MCP profile (`delegate-session` posture) holding only what the owner approved. |
 | Share | **Share** | Native file sharing: a bearer link or an addressed link opened in the Share viewer. Retired: broker-backed share links, `?tc2` links. |
 | Bearer link | **Bearer link** | `#tc1=` link; anyone holding the complete URL can read until expiry. |

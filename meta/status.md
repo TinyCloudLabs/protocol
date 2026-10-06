@@ -34,7 +34,7 @@ Last reconciled 2026-10-05.
 |-----------|--------|
 | Identity (did:pkh + did:key, SIWE) | shipped (30-day default session since SDK 3.0) |
 | OpenKey (managed keys, `/delegate`, primary key) | shipped |
-| OpenKey device authorization (KV-only, one space, ≤30 days) | shipped |
+| OpenKey device authorization (KV data access in one space, ≤30 days) | shipped |
 | Autonomic spaces + addressing grammar | shipped |
 | Authorization (delegation / invocation / revocation / attenuation) | shipped (chain-wide revocation; policy-root revocation) |
 | CACAO chain validation | shipped |
