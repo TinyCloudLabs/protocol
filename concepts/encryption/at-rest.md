@@ -6,9 +6,9 @@ status: shipped
 layer: protocol
 sources:
   - repo: tinycloud-node
-    path: tinycloud-core/src/encryption.rs
+    path: tinycloud-core/src/encryption.rs@05c6a93
 tags: [encryption, at-rest]
-timestamp: 2026-06-23
+timestamp: 2026-10-05
 ---
 
 # At-Rest Encryption
@@ -61,7 +61,7 @@ On read, the first byte `0x01` selects the encrypted path; the node slices bytes
 
 ## Status & drift
 
-Shipped and stable. The seal-at-rest key for [[encryption-networks|network]] private keys is a `ColumnEncryption` derived from `b"tinycloud/encryption/network-seal"`; in DStack mode that derivation is rooted in the dstack-derived key setup, lifting network private keys into [[tee-dstack|TEE]] key management (`tinycloud-node-server/src/lib.rs:216-221`). Code is canonical.
+Shipped and stable. The seal-at-rest key for [[encryption-networks|network]] private keys is a `ColumnEncryption` derived from `b"tinycloud/encryption/network-seal"`; in DStack mode that derivation is rooted in the dstack-derived key setup, lifting network private keys into [[tee-dstack|TEE]] key management (`tinycloud-node-server/src/lib.rs:411-416` @05c6a93). Code is canonical.
 
 ## Sources
 - `tinycloud-node`: `tinycloud-core/src/encryption.rs` (`ColumnEncryption`, `VERSION_ENCRYPTED`, `maybe_encrypt`/`maybe_decrypt`, tests at `:99-166`)

@@ -1,17 +1,17 @@
 ---
 type: index
 title: Credentials
-description: OpenCredentials — verifiable credentials that feed the policy engine.
-timestamp: 2026-06-22
+description: OpenCredentials — holder-bound vc+sd-jwt credentials that the Node verifies before minting a policy session.
+timestamp: 2026-10-05
 ---
 
 # Credentials
 
-OpenCredentials — verifiable credentials that feed the policy engine.
+OpenCredentials: holder-bound `vc+sd-jwt` credentials that the Node verifies before minting a policy session.
 
 ## Concepts
 
-- [OpenCredentials](opencredentials.md) — Distinct canonical credentialing layer that feeds the policy engine.
-- [Witness Service](witness-service.md) — witness.credentials.org issues credentials signed by did:web:issuer.tinycloud.xyz.
-- [SD-JWT / W3C VCs](sd-jwt-vc.md) — SD-JWT and W3C verifiable credentials stored through the normal web SDK.
-- [Feeds the Policy Engine](feeds-policy-engine.md) — Nonce-signed credential handshakes that feed conditions into the policy engine.
+- [OpenCredentials](opencredentials.md) — The credentials system: issuer identity did:web:issuer.credentials.org plus the witness API at witness.credentials.org.
+- [Witness Service](witness-service.md) — TEE issuer running holder-bound acquisitions (8-digit mailbox codes) for the exact-email and email-domain profiles.
+- [SD-JWT VC](sd-jwt-vc.md) — The selectively-disclosable format, wrapped in a vc+sd-jwt envelope the Node verifies in-tree.
+- [Feeds the Policy Engine](feeds-policy-engine.md) — How a credential, checked once at mint, becomes a policy session delegation.

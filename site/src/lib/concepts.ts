@@ -9,6 +9,7 @@ export const SECTION_ORDER = [
   'spaces',
   'authorization',
   'policy-engine',
+  'sharing',
   'services',
   'encryption',
   'storage',
@@ -19,6 +20,7 @@ export const SECTION_ORDER = [
   'credentials',
   'nodes',
   'sdk',
+  'agents',
   'future',
 ] as const;
 
@@ -28,6 +30,7 @@ export const SECTION_LABELS: Record<string, string> = {
   spaces: 'Spaces',
   authorization: 'Authorization',
   'policy-engine': 'Policy Engine',
+  sharing: 'Sharing',
   services: 'Services',
   encryption: 'Encryption',
   storage: 'Storage',
@@ -38,6 +41,7 @@ export const SECTION_LABELS: Record<string, string> = {
   credentials: 'Credentials',
   nodes: 'Nodes',
   sdk: 'SDK',
+  agents: 'Agents',
   future: 'Future',
 };
 

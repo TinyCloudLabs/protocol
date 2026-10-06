@@ -10,7 +10,7 @@ sources:
     path: README.md
 provenance_note: design-only; no implementing code as of 2026-06
 tags: [service, compute, future]
-timestamp: 2026-06-23
+timestamp: 2026-10-05
 ---
 
 # Compute Service
@@ -23,7 +23,7 @@ It would extend the protocol from *storage* services (kv/sql/…) to *computatio
 
 ## Status & drift
 
-**Planned / not implemented.** No `compute` service exists in `tinycloud-core`; design intent for it was not captured beyond the whitepaper mention (some "MPC" ideas folded into [[threshold-decryption]] instead). See the roadmap entry [[future/compute]] and [[meta/contradictions]] (whitepaper lists a service the code lacks).
+**Planned / not implemented.** No `compute` service exists in `tinycloud-core`; design intent for it was not captured beyond the whitepaper mention (some "MPC" ideas folded into [[encryption/threshold-decryption|threshold decryption]] instead). See the roadmap entry [[future/compute]] and [[meta/contradictions]] (whitepaper lists a service the code lacks).
 
 ## Relationships
 

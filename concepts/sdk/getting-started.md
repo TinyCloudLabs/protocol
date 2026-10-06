@@ -14,7 +14,7 @@ sources:
   - repo: tinycloud-app-kit
     path: README.md
 tags: [sdk, getting-started, applications]
-timestamp: 2026-07-02
+timestamp: 2026-10-05
 ---
 
 # Getting Started
@@ -23,13 +23,15 @@ This is the golden path from nothing to a **working TinyCloud app running locall
 
 ## Install the SDK
 
-The client SDK is published on npm under the `@tinycloud` scope (current line: **2.6.3**). A browser app needs `@tinycloud/web-sdk`; a server/backend needs `@tinycloud/node-sdk`; both re-export the shared `@tinycloud/sdk-core`. Sign-in uses the OpenKey SDK.
+The client SDK is published on npm under the `@tinycloud` scope (current stable: **3.0.0**; [[tinyboilerplate]] still pins 2.6.3). A browser app needs `@tinycloud/web-sdk`; a server/backend needs `@tinycloud/node-sdk`; both re-export the shared `@tinycloud/sdk-core`. Sign-in uses the OpenKey SDK.
 
 ```bash
 npm install @tinycloud/web-sdk @openkey/sdk        # frontend
 npm install @tinycloud/node-sdk                    # backend
-# optional: the `tc` CLI for poking a space from a terminal
+# optional: the `tc` CLI for poking a space from a terminal (Node 20+)
 npm install -g @tinycloud/cli
+# on Linux, `tc` on PATH is often /usr/sbin/tc (iproute2); call the CLI by path:
+"$(npm prefix --global)/bin/tc" --version
 ```
 
 You rarely install these by hand — the scaffold below pins them for you. Install them directly only when wiring TinyCloud into an existing app.
@@ -119,7 +121,7 @@ The blessed deployment (a locked TinyCloud decision):
 
 - **Frontend → Cloudflare Pages.** The frontend is static assets after `bun run build`; publish them to Cloudflare Pages.
 - **Backend → Phala (TEE).** The backend runs in a Phala CVM so its behavior is [[tee-backends|attestable]] — the [[how-apps-work#the-backend|reason a user can grant it authority over their data]].
-- **Data → the canonical TinyCloud host.** Apps use `https://node.tinycloud.xyz` (the `TINYCLOUD_HOST` default); you do not run your own node.
+- **Data → the canonical TinyCloud host.** Apps use `https://node.tinycloud.xyz` (the `TINYCLOUD_HOST` default); the CLI and MCP default to `https://tee.node.tinycloud.xyz`, another name for the same Node. You do not run your own node.
 - **Sign-in → openkey.so.** Apps use the canonical OpenKey service; the frontend's `VITE_OPENKEY_HOST` already defaults to `https://openkey.so`.
 
 The production env surface (`TINYCLOUD_HOST`, `FRONTEND_URL`/CORS, backend `BACKEND_PRIVATE_KEY`) is documented in [[tinyboilerplate]].
@@ -130,9 +132,10 @@ Installs the [[packages|SDK packages]]; scaffolds from [[tinyboilerplate]] and a
 
 ## Status & drift
 
-In-progress. Local run (frontend + backend against `openkey.so` and the canonical node) is the shipped, verifiable path today and satisfies the v1 north-star. The deploy section states the blessed targets; the step-by-step Cloudflare Pages + Phala runbooks live in the [[tinyboilerplate]] repo's deployment docs (evolving). Package versions track the `@tinycloud` 2.6.3 line.
+In-progress. Local run (frontend + backend against `openkey.so` and the canonical node) is the shipped, verifiable path today and satisfies the v1 north-star. The deploy section states the blessed targets; the step-by-step Cloudflare Pages + Phala runbook is [[tinyboilerplate]]'s `DEPLOYMENT.md`, with `wrangler.toml`, `phala.toml`, and `docker-compose.phala.yml` in the app starter. The scaffold pins the `@tinycloud` 2.6.3 line; the current SDK is 3.0.0.
 
 ## Sources
 - `tinyboilerplate`: `README.md` (quick start, scaffold, ports, env vars, validation ladder, local HTTPS constraint), `package.json` (`dev:app-starter`, `generate-key`, `scaffold:app` scripts), `templates/app-starter/frontend/src/App.tsx` (sign-in → compose → delegate → probe flow)
 - `tinycloud-app-kit`: `README.md` (manifest + knowledge bundle contract, schema id)
-- npm: `@tinycloud/{web-sdk,node-sdk,sdk-core}` 2.6.3, `@openkey/sdk`, `@tinycloud/cli` (package names/versions verified against the registry)
+- `tinyboilerplate`: `DEPLOYMENT.md` (Cloudflare Pages + Phala runbook)
+- npm: `@tinycloud/{web-sdk,node-sdk,sdk-core}` 3.0.0, `@openkey/sdk` 0.10.2, `@tinycloud/cli` 1.0.0 (verified against the registry Oct 5, 2026)

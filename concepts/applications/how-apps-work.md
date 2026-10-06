@@ -14,7 +14,7 @@ sources:
   - repo: tinyboilerplate
     path: packages/agent-runtime/docker/delegation-endpoint.ts
 tags: [applications, architecture, delegation]
-timestamp: 2026-07-02
+timestamp: 2026-10-05
 ---
 
 # How Apps Work
@@ -54,7 +54,7 @@ An optional server-side component that ingests data, calls external APIs, or run
 
 ### The agent
 
-An autonomous worker on the **TinyCloud agent service**. Like the backend it has its own DID and holds only delegated authority, and it advertises the permissions it wants the same server-info way (`GET /info`, returning the same `{ did, name, expiry, permissions }` shape the backend uses). The agent operates on the owner's spaces through a [[delegation-api|PortableDelegation]] activated with `node.useDelegation(...)`, refreshing its server-side session before it expires.
+An autonomous worker with its own DID, such as the [[tinyboilerplate]] agent runtime. (Agents can also reach the owner's data from a delegate profile through the [[cli|CLI]] or the [[mcp|MCP server]].) Like the backend it holds only delegated authority, and it advertises the permissions it wants the same server-info way (`GET /info`, returning the same `{ did, name, expiry, permissions }` shape the backend uses). The agent operates on the owner's spaces through a [[delegation-api|PortableDelegation]] activated with `node.useDelegation(...)`, refreshing its server-side session before it expires.
 
 ## TinyCloud as datastore and communication substrate
 

@@ -12,7 +12,7 @@ sources:
   - repo: js-sdk
     path: packages/sdk-services/src/duckdb/DuckDbService.ts
 tags: [sdk, data]
-timestamp: 2026-06-23
+timestamp: 2026-10-05
 ---
 
 # Data APIs
@@ -63,7 +63,13 @@ async function listNotes(access: DelegatedAccess) {
 }
 ```
 
-Schema setup uses the migration primitive rather than cold DDL in a hot path — `sql.db("main").migrations.apply({ namespace, migrations: [{ id, sql: [...] }] })` — and the SQL resource must request the `tinycloud.sql/schema` action (see [[tinycloud-app-kit]]).
+Schema setup uses the migration primitive rather than cold DDL in a hot path — `sql.db("main").migrations.apply({ namespace, migrations: [{ id, sql: [...] }] })` — and the SQL resource must request the `tinycloud.sql/schema` action (see [[tinycloud-app-kit]]). From SDK 3.1.0 beta, `apply()` reads first and writes only when a migration is pending, so an up-to-date app still starts when storage is full.
+
+### When storage is full
+
+Writes on a full space fail with `STORAGE_QUOTA_EXCEEDED` (or `STORAGE_LIMIT_REACHED` when one write is larger than what is left), with `meta.usedBytes`/`meta.limitBytes` when the node reports them; reads keep working (see [[quota]]). SDK 3.0.0 maps these codes for KV; the 3.1.0 beta extends them to SQL, DuckDB, and vault writes and adds `isStorageFullError(error)`. Treat it as a read-only state, not an outage.
+
+The secrets service's `secrets.listAll()` (3.0.0) returns every secret name the session can see, global and scoped, never values.
 
 ## Relationships
 
@@ -71,7 +77,8 @@ Client surface over [[kv]] / [[sql]] / [[duckdb]]; each call an [[invocation]] o
 
 ## Status & drift
 
-Shipped. `Result`-typed surface; per-space helpers (`kvForSpace`/`sqlForSpace`) are recent additions.
+Shipped (SDK 3.0.0). `Result`-typed surface with per-space helpers (`kvForSpace`/`sqlForSpace`). The 3.1.0 beta also applies the configured request timeout to KV, SQL, and DuckDB calls and adds the KV change-feed client (`kv.changes()`, see [[kv]]).
 
 ## Sources
-- `js-sdk`: `packages/sdk-services/src/{kv/KVService.ts, sql/SQLService.ts, duckdb/DuckDbService.ts}`
+- `js-sdk` (`v3.0.0` = `d43e51ea`): `packages/sdk-services/src/{kv/KVService.ts, sql/SQLService.ts, duckdb/DuckDbService.ts, types.ts}` (storage error codes), `packages/sdk-services/src/secrets/SecretsService.ts` (`listAll`)
+- `js-sdk` (`master`, 3.1.0 beta): `packages/sdk-services/src/errors.ts` (`isStorageFullError`), package `CHANGELOG.md` files

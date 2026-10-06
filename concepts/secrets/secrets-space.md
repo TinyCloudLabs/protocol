@@ -12,7 +12,7 @@ sources:
   - repo: js-sdk
     path: packages/node-sdk/src/TinyCloudNode.ts
 tags: [secrets, space, system-spaces]
-timestamp: 2026-06-23
+timestamp: 2026-10-05
 ---
 
 # Secrets Space
@@ -40,7 +40,7 @@ Manifest secret declarations do **not** name `tinycloud.kv` directly; they emit 
 
 ## Mechanics
 
-A value written to a secret is encrypted under the owner's [[encryption-networks|encryption network]] before it is stored as a KV record at `vault/secrets/<NAME>` — so what lives in the `secrets` space is ciphertext, never plaintext. The node binds its base secrets service to `space("secrets").vault` (`TinyCloudNode.ts:2176`). A reader holding a `tinycloud.kv/get` cap over `vault/secrets/<NAME>` fetches the encrypted envelope; decryption is a *separate* authority — a `tinycloud.encryption/decrypt` [[capabilities|capability]] on the network URN `urn:tinycloud:encryption:{ownerDid}:default` — performed by the node. This split (read the envelope vs. decrypt it) is what lets a [[tee-backends|TEE backend]] be delegated a secret without ever being trusted with plaintext: it can only obtain the value by asking the node to decrypt under the delegated network grant.
+A value written to a secret is encrypted under the owner's [[encryption-networks|encryption network]] before it is stored as a KV record at `vault/secrets/<NAME>` — so what lives in the `secrets` space is ciphertext, never plaintext. The node binds its base secrets service to the `secrets` space (`secretsForSpace("secrets")`, `TinyCloudNode.ts:4751`). A reader holding a `tinycloud.kv/get` cap over `vault/secrets/<NAME>` fetches the encrypted envelope; decryption is a *separate* authority — a `tinycloud.encryption/decrypt` [[capabilities|capability]] on the network URN `urn:tinycloud:encryption:{ownerDid}:default` — performed by the node. That decrypt grant must carry the network URN as a **top-level ReCap resource**; the node refuses (401) a decrypt ability nested under the `secrets` space resource (see [[user-bound-decrypt]]). This split (read the envelope vs. decrypt it) is what lets a [[tee-backends|TEE backend]] be delegated a secret without ever being trusted with plaintext: it can only obtain the value by asking the node to decrypt under the delegated network grant.
 
 ## Relationships
 
@@ -52,7 +52,7 @@ Listen declares `FIREFLIES_API_KEY: ["read"]` in its [[manifest-model|manifest]]
 
 ## Status & drift
 
-Shipped. The space name is SDK-enforced convention, not node-enforced (`tinycloud-node` will host any name — see [[system-spaces]]). The user-facing path the [[vault-secrets|secret-manager]] presents is `secrets/<NAME>`; the **KV** permission/storage path carries the extra `vault/` prefix (`vault/secrets/<NAME>`) — a common point of confusion. The secret-manager README also references a parallel `keys/secrets/<NAME>` KV path for write/delete operations; `resolveSecretPath` itself emits only the `vault/...` permission path, so treat the `keys/...` path as the secret-manager app's own convention, not a protocol guarantee.
+Shipped (stable SDK 3.0.0, Node 1.17.3). Secret writes are [[kv]] puts and count toward the space's storage [[quota]]; reads keep working when it is full. The space name is SDK-enforced convention, not node-enforced (`tinycloud-node` will host any name — see [[system-spaces]]). The user-facing path the [[vault-secrets|secret-manager]] presents is `secrets/<NAME>`; the **KV** permission/storage path carries the extra `vault/` prefix (`vault/secrets/<NAME>`) — a common point of confusion.
 
 ## Sources
 - `js-sdk`: `packages/sdk-core/src/manifest.ts:262` (`SECRETS_SPACE`), `:265` (`VAULT_PERMISSION_SERVICE`), `:448` (`expandPermissionEntry`), `:971-999` (`secretEntriesForManifest`); `packages/sdk-services/src/secrets/paths.ts` (`resolveSecretPath`, `SECRET_NAME_RE`, reserved scopes, `resolveSecretListPrefix`); `packages/node-sdk/src/TinyCloudNode.ts:831` (host secrets space), `:2176` (`space("secrets").vault`)

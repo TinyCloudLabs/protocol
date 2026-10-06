@@ -6,13 +6,13 @@ status: shipped
 layer: tinycloud-app
 sources:
   - repo: js-sdk
-    path: packages/sdk-services/src/secrets/paths.ts
+    path: packages/sdk-services/src/secrets/paths.ts@d43e51ea
   - repo: js-sdk
-    path: packages/sdk-services/src/secrets/SecretsService.ts
+    path: packages/sdk-services/src/secrets/SecretsService.ts@d43e51ea
   - repo: secret-manager
-    path: README.md
+    path: README.md@64fb63e
 tags: [secrets, vault, tinycloud-app]
-timestamp: 2026-06-23
+timestamp: 2026-10-05
 ---
 
 # Vault Secrets
@@ -45,7 +45,7 @@ resolveSecretPath("ANTHROPIC_API_KEY", { scope: "food-tracker" })
 - **`permissionPaths.vault`** — the backing **KV** path: the `vaultKey` with a literal `vault/` prefix. This is the path a [[capabilities|capability]] is actually issued over.
 - **`name`** must match `SECRET_NAME_RE = /^[A-Z][A-Z0-9_]*$/`. **`scope`** is canonicalized to lowercase kebab-case; `default` and `global` are reserved (omit `scope` for the global namespace).
 
-The runtime surface is `SecretsService` (`packages/sdk-services/src/secrets/SecretsService.ts`, with node/web bindings), bound to `space("secrets").vault`. Provider metadata (provider id, ENV name, scope, note, last-test status) is **not** the secret — the secret-manager keeps it in its own app SQL so listing providers does not unlock the data vault (secret-manager `README.md`, "Provider State").
+The runtime surface is `SecretsService` (`packages/sdk-services/src/secrets/SecretsService.ts`, with node/web bindings), bound to `space("secrets").vault`. `secrets.listAll()` (stable 3.0.0, `SecretsService.ts:129`) returns the **names** of both global and scoped secrets, never their values. Provider metadata (provider id, ENV name, scope, note, last-test status) is **not** the secret — the secret-manager keeps it in its own app SQL so listing providers does not unlock the data vault (secret-manager `README.md`, "Provider State").
 
 ## Mechanics
 
@@ -58,9 +58,17 @@ A consuming app declares `secrets: { ANTHROPIC_API_KEY: true }`, which the SDK t
 A secret value is a [[encryption-networks|network]]-encrypted envelope stored under `vault/secrets/<NAME>`. Sharing it with another principal (an app, a [[tee-backends|TEE backend]]) is two grants, never a key hand-off:
 
 1. a **read-grant** — a `tinycloud.kv/get` [[capabilities|capability]] over `vault/secrets/<NAME>` in the [[secrets-space|secrets space]], so the grantee can fetch the *ciphertext*; and
-2. a **decrypt-grant** — a `tinycloud.encryption/decrypt` capability on the owner's network URN `urn:tinycloud:encryption:{ownerDid}:default`, so the node will decrypt that envelope on the grantee's behalf.
+2. a **decrypt-grant** — a `tinycloud.encryption/decrypt` capability on the owner's network URN `urn:tinycloud:encryption:{ownerDid}:default`, so the node will decrypt that envelope on the grantee's behalf. The URN must be a **top-level ReCap resource** in the grant; one nested under the `secrets` space is refused with 401 (TC-598). OpenKey's `/delegate` signs decrypt grants that way (see [[user-bound-decrypt]]).
 
 The grantee never holds the encryption key; the node performs decryption only when both grants are present. This is exactly how [[example-listen|Listen]] hands its TEE backend secret access.
+
+### Setup links for a missing secret
+
+When an app or agent needs a secret that does not exist yet, it can send the owner a link that opens Secret Manager with that name filled in. The beta CLI builds `https://secrets.tinycloud.xyz/app?secret=NAME` (plus `&scope=…` for a scoped secret); Secret Manager also accepts `?name=NAME` (secret-manager `6d6fa75`).
+
+### When storage is full
+
+Secret Manager (`secrets.tinycloud.xyz`) stays readable when the secrets space is over its storage [[quota]]: every secret stays listed and readable, a save the node rejects for storage shows a plain message and a persistent "Storage full: read-only" banner, and deleting a secret still works (secret-manager `64fb63e`).
 
 ## Relationships
 
@@ -72,8 +80,8 @@ A user adds `ANTHROPIC_API_KEY` scoped to `food-tracker` in the secret-manager. 
 
 ## Status & drift
 
-Shipped. The L2 app's GitHub repo is `secret-manager` (product name "TinyCloud Secrets" / "TinyCloud Secret Manager"). **Drift:** the README documents a parallel `keys/secrets/<NAME>` KV path written alongside `vault/secrets/<NAME>` on writes; `resolveSecretPath` itself only emits the `vault/...` permission path, so `keys/...` is the secret-manager app's own storage convention, not part of the path resolver. The user-facing `secrets/<NAME>` form and the on-wire `vault/secrets/<NAME>` KV path differ by the `vault/` prefix — match the one the layer you are in actually uses.
+Shipped (stable SDK 3.0.0; Secret Manager at `secrets.tinycloud.xyz`). CLI 1.0.0 already returns a setup link for a missing secret (`secrets.tinycloud.xyz?name=…`, which Secret Manager forwards to its add form); the 1.1.0 beta links to `/app?secret=…` directly. The L2 app's GitHub repo is `secret-manager` (product name "TinyCloud Secrets" / "TinyCloud Secret Manager"). The user-facing `secrets/<NAME>` form and the on-wire `vault/secrets/<NAME>` KV path differ by the `vault/` prefix — match the one the layer you are in actually uses.
 
 ## Sources
-- `js-sdk`: `packages/sdk-services/src/secrets/paths.ts` (`resolveSecretPath`, `ResolvedSecretPath`, `canonicalizeSecretScope`, `resolveSecretListPrefix`, `SECRET_NAME_RE`, reserved scopes); `packages/sdk-services/src/secrets/SecretsService.ts` (runtime service, `space("secrets").vault`)
-- `secret-manager`: `README.md` (declarative reads, escalated writes/deletes, vault layout, provider state, `keys/...` vs `vault/...`)
+- `js-sdk` @d43e51ea (stable 3.0.0): `packages/sdk-services/src/secrets/paths.ts` (`resolveSecretPath`, `ResolvedSecretPath`, `canonicalizeSecretScope`, `resolveSecretListPrefix`, `SECRET_NAME_RE`, reserved scopes); `packages/sdk-services/src/secrets/SecretsService.ts` (runtime service, `space("secrets").vault`; `:129` `listAll()`)
+- `secret-manager`: `README.md` (declarative reads, escalated writes/deletes, vault layout, provider state, `keys/...` vs `vault/...`); `64fb63e` (read-only when storage is full, TC-619); `6d6fa75` (setup links with `?secret=` / `?name=`, TC-649)

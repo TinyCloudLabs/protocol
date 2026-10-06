@@ -18,7 +18,7 @@ sources:
   - repo: tinyboilerplate
     path: packages/agent-runtime/docker/delegation-endpoint.ts
 tags: [applications, reference, boilerplate, sdk]
-timestamp: 2026-07-02
+timestamp: 2026-10-05
 ---
 
 # tinyboilerplate
@@ -91,7 +91,7 @@ App-starter backend env: `BACKEND_PRIVATE_KEY` (required, from `bun run generate
 
 ## Deploy targets
 
-Frontend → **Cloudflare Pages** (static build output). Backend → **Phala** (a TEE CVM, for [[tee-backends|attestation]]). Data → the canonical **`node.tinycloud.xyz`** host. Sign-in → **`openkey.so`**. These are locked TinyCloud decisions; the step-by-step deploy runbooks live in the repo's deployment docs.
+Frontend → **Cloudflare Pages** (static build output). Backend → **Phala** (a TEE CVM, for [[tee-backends|attestation]]). Data → the canonical TinyCloud Node (`node.tinycloud.xyz`, also reachable as `tee.node.tinycloud.xyz`; `DEPLOYMENT.md` names the value to use for production backends). Sign-in → **`openkey.so`**. These are locked TinyCloud decisions; the step-by-step runbook is the repo's `DEPLOYMENT.md`, with `wrangler.toml`, `phala.toml`, and `docker-compose.phala.yml` in the app starter.
 
 ## Relationships
 
@@ -99,7 +99,7 @@ The runnable counterpart to [[tinycloud-app-kit]]; the scaffold source for [[get
 
 ## Status & drift
 
-Shipped, tracking the `@tinycloud` 2.6.3 SDK line with zero known staleness in the local dev path. Local run (frontend + backend against `openkey.so` + the canonical node) is fully working. The agent-runtime three-DID path exists as the sidecar above but the single-consent three-way fan-out is still hardening ([[how-apps-work#status--drift]]). Deploy runbooks are evolving in-repo.
+Shipped. The scaffold pins the `@tinycloud` 2.6.3 SDK line (and `@openkey/sdk` 0.8.x); the current SDK is 3.0.0, which changes the browser provider to raw EIP-1193 (the template's `web3Provider` is already EIP-1193) and removes the legacy Share APIs. The template stays readable when the owner's storage is full (storage-full copy and read-first startup, see [[quota]]). The repo also ships a `tinycloud-new-app` agent skill under `.agents/skills` (see [[agent-skills]]). Local run (frontend + backend against `openkey.so` + the canonical node) is fully working. The agent-runtime three-DID path exists as the sidecar above but the single-consent three-way fan-out is still hardening ([[how-apps-work#status--drift]]). Deploy is documented in `DEPLOYMENT.md`.
 
 ## Sources
 - `tinyboilerplate`: `README.md` (layout, quick start, packages, env, constraints, validation ladder), `package.json` (workspace + scripts), `packages/client/src/index.ts` (client exports), `packages/server/src/index.ts` (server exports), `scripts/scaffold-app.ts` (scaffold copy set + required flags), `packages/agent-runtime/docker/delegation-endpoint.ts` (`node.useDelegation`, `/info` server-info shape, refresh loop)
