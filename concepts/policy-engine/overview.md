@@ -1,72 +1,60 @@
 ---
 type: concept
 title: Policy Engine Overview
-description: The policy engine evaluates owner-signed Policies whose `when` conditions gate the issuance of a capability grant — a portable-delegation bounded by the owner's permissions ceiling.
-status: in-progress
+description: The Node's policy engine (Policy v3) lets an owner sign one policy for recipients they don't know yet; a recipient who proves the required credential gets an ordinary, revocable delegation minted by the Node.
+status: shipped
 layer: protocol
-resource: "xyz.tinycloud.policy/policy/v0"
+resource: "xyz.tinycloud.policy/policy/v2"
 sources:
-  - repo: policy-engine
-    path: src/lib.rs
-  - repo: policy-engine
-    path: src/types.rs
-  - repo: policy-engine
-    path: crates/policy-runtime/src/lib.rs
-  - repo: policy-engine
-    path: spec/README.md
+  - repo: tinycloud-node
+    path: tinycloud-node-server/src/policy_v3.rs@05c6a93
+  - repo: tinycloud-node
+    path: CHANGELOG.md@05c6a93
+  - repo: tinycloud-node
+    path: test/m1-realdata-e2e/Cargo.toml@05c6a93
+  - repo: js-sdk
+    path: packages/share-sdk/src/addressed-publish.ts@d43e51ea
 tags: [policy-engine, central, authz]
-timestamp: 2026-06-23
+timestamp: 2026-10-05
 ---
 
 # Policy Engine Overview
 
-The **policy engine** evaluates **owner-signed [[policy-as-central-primitive|Policies]]** (schema `xyz.tinycloud.policy/policy/v0`) and, when a Policy's `when` conditions are satisfied, issues a **grant**: a `portable-delegation` whose [[capabilities|capabilities]] are bounded by the Policy's `permissions_ceiling` through strict **containment**. It is the declarative, evidence-aware layer above raw [[delegation]] — a Policy says *"given this subject and this verifiable evidence, grant this subset of my authority for at most this TTL"* — and it is the concrete mechanism behind [[feeds-policy-engine|"credentials feed the policy engine"]].
+The **policy engine** turns an owner-signed rule into delegations for recipients the owner has never met. The owner signs a **policy**: a [[capabilities|capability]] ceiling plus a credential requirement. A recipient proves the credential to the [[nodes|Node]], and the Node mints a short-lived [[delegation]] to the recipient's key. In production this is **Policy v3**, built into Node 1.17.3; its mechanics are in [[policy-v3-admission]].
 
 ## Role
 
-The policy engine is the **permissioning layer of [[architecture-layers|Layer 1]]**, a peer of [[capabilities]] and [[openkey|OpenKey]] within the protocol. Where a bare [[capabilities|capability]] is *imperative* (the owner signs a specific grant to a specific key), a Policy is *declarative*: the owner signs a rule once, and the engine mints grants on demand to any holder who satisfies the rule. This is what lets authority be conditioned on facts the owner cannot know in advance — an [[credentials|OpenCredentials]] [[credential-gated-delegation|credential]] the holder presents at request time, an [[agent-transaction-policy|enrolled agent]] acting for an eligible subject — without the owner being online to sign each grant.
+A bare [[delegation]] is imperative: the owner signs a specific grant to a specific key. A policy is declarative: the owner signs once, and the Node grants on demand to anyone who satisfies it, with no owner signature per recipient. This is how a share can be addressed to an email address or a whole email domain (see [[native-sharing]]).
 
-**Design-intent boundary (validated, stated honestly):** the policy engine is a **standalone Rust workspace** (`policy-core` + `crates/policy-runtime` + `crates/policy-evidence-vc`). It is **not yet consumed by [[nodes|tinycloud-node]]** — the node's authorization today is the in-tree [[capabilities]]/[[delegation]] path, and `tinycloud-node` has **no dependency on `policy-core` or `policy-runtime`** (verified: no such Cargo dependency). The [[architecture-layers|locked layer model]] says the node *will* consume the engine at runtime; the v0 contract is **"the policy engine emits native authority"** (`spec/mvp-doc-reconciliation.md`), i.e. it produces a `portable-delegation` the node would honor — but the embedding is design-intent, not shipped wiring. Author and read this concept as `in-progress`.
+Three properties keep this safe:
+
+- **The policy is a principal, not a token.** Its authority root names `did:tinycloud:policy:<digest>` as audience. Nobody presents the policy as a proof at invocation time.
+- **The credential is checked once, at mint.** After that the recipient holds an ordinary session UCAN and uses the ordinary `/delegate` and `/invoke` paths (see [[credential-gated-delegation]]).
+- **Two roots, both required.** The owner signs a `policy-authority` root and a `policy-enforcement` root. Every session must cite both, and either can be revoked to stop it.
 
 ## Mechanics
 
-A Policy is resolved in two HTTP-shaped round trips (`crates/policy-runtime/src/lib.rs`, `PolicyRuntime`):
-
-1. **Challenge.** `issue_challenge(policy_id, now)` loads the active Policy and returns a nonce-bearing `GrantChallenge` (`xyz.tinycloud.policy/challenge/v0`) — a fresh random nonce, the engine's `audience`, accepted signature suites, and a TTL. The nonce is the replay-protection anchor.
-2. **Resolve.** The holder returns a `GrantPresentation` (`xyz.tinycloud.policy/presentation/v0`) — its requested [[capabilities|capabilities]], a `holder_binding` proof, the nonce, and any `evidence`. `resolve(presentation, now)` then, in order: re-loads the active Policy; **consumes the nonce** (a second use is rejected `challenge-nonce-consumed`); runs `validate_grant_presentation` (`src/evaluator.rs`); validates the [[agent-transaction-policy|holder enrollment binding]] (`validate_enrolled_agent_binding`); verifies each `evidence` item via the [[credential-gated-delegation|VC evidence verifier]]; **re-evaluates `when`** with the *satisfied* evidence IDs (`evaluate_expression`); and only then calls `GrantIssuer::issue` to mint the `PortableDelegation`, recording an `IssuanceRecord`.
-
-The grant's expiry is the **minimum** of `policy.grant.max_ttl_seconds`, the presentation's own `expires_at`, and every satisfied credential's `valid_until` (`grant_expires_at`) — so a grant never outlives its evidence.
-
-## Shape
-
-A `Policy` (`src/types.rs:49`) is a signed object with fields:
-
-```
-{ schema, policy_id, owner_did, signing_key_did, created_at, expires_at?,
-  resource: PolicyResource,        // resource_type, resource_id, permissions_ceiling: [PolicyCapability]
-  when: Expression,                // allOf | anyOf | subject{did} | evidence{EvidenceRequirement}
-  grant: GrantTemplate,            // output: portable-delegation, max_ttl_seconds, delegation_mode, revocation
-  disclosure?, audit?, signature }
-```
-
-- **`when`** is the [[policy-as-central-primitive|condition grammar]] — a recursive `Expression` of `allOf` / `anyOf` over `subject{did}` (the eligible subject must match) and `evidence{…}` (a named, verifier-bound credential requirement must be satisfied).
-- **`grant`** can only output `portable-delegation`; `delegation_mode` is `terminal` (the grant cannot be re-delegated) or `attenuable`; `revocation` is `refresh-only` or `active-cutoff`.
-- **`permissions_ceiling`** is a list of [[policy-as-central-primitive|`PolicyCapability`]] over services `tinycloud.kv | tinycloud.sql | tinycloud.vfs`; every requested capability must be **contained** by some ceiling entry or the request is rejected `requested-capabilities-exceeded`.
-
-Control-plane objects (Policy, challenge, enrollment, …) are signed under the **[[#status--drift|TinyCloud Signed Object Profile]]**: a domain-separated SHA-256 over [RFC 8785 JCS](https://www.rfc-editor.org/rfc/rfc8785) of the body, with two suites (`eddsa-ed25519-sha256-jcs-v1`, `eip191-secp256k1-sha256-jcs-v1`). The `GrantPresentation` is deliberately **nonce-bound, not content-addressed**, in keeping with strict nonce-based replay protection.
+1. **Publish.** The owner signs the policy document and both roots, and registers them with `POST /policy/v3/policies`. The Node checks that the owner actually holds everything the roots grant.
+2. **Prove.** The recipient takes a 300-second challenge, obtains a fresh [[opencredentials|OpenCredentials]] credential, and posts it with a signed presentation to `POST /policy/v3/delegations`.
+3. **Mint.** The Node verifies the [[sd-jwt-vc|SD-JWT credential]] itself and signs the first session UCAN to the recipient's DID, with both roots as parents. By default the session lasts 60 s; a requested expiry can extend it up to the policy's and roots' limits.
+4. **Use.** The recipient invokes, or re-delegates up to 8 hops. Every invocation re-checks the chain, root liveness and [[revocation]].
 
 ## Relationships
 
-Evaluates an owner-signed [[policy-as-central-primitive|Policy]] whose `when` may demand [[credential-gated-delegation|credential evidence]] verified against [[credentials|OpenCredentials]]; emits a `portable-delegation` that is a [[capabilities|capability]] grant bounded by `permissions_ceiling` [[attenuation|containment]]; binds the holder via [[agent-transaction-policy|holder enrollment]]; sits in [[architecture-layers|Layer 1]] as the permissioning peer of [[capabilities]] and [[openkey|OpenKey]]; the satisfied-evidence pipeline is detailed in [[feeds-policy-engine]].
+Specified in detail by [[policy-v3-admission]]; credential checking is [[credential-gated-delegation]], fed by [[feeds-policy-engine|OpenCredentials]]; the rule-as-primitive framing is [[policy-as-central-primitive]]; mints a [[delegation]] bounded by [[attenuation]]; ended by [[revocation]]; consumed by addressed [[sharing]] links; agent hand-off is covered in [[agent-transaction-policy]]; sits in [[architecture-layers|Layer 1]] beside [[capabilities]] and [[openkey|OpenKey]].
 
 ## Example
 
-An owner publishes one Policy `pol_email_domain`: `when` = `evidence{ requirement_id: "email-domain", verifier: "w3c.vc/credential/v1", requirements: { type: "opencredentials.email/v1", emailDomains: ["tinycloud.xyz"] } }`; `permissions_ceiling` = a single `tinycloud.sql/read` capability over a Listen transcript table; `grant` = `portable-delegation`, `max_ttl_seconds: 3600`, `terminal`, `active-cutoff`. Any [[agent-transaction-policy|enrolled agent]] that presents a valid [[sd-jwt-vc|SD-JWT]] proving a `@tinycloud.xyz` email — without revealing the address itself — receives a one-hour, non-re-delegatable read grant over exactly that table. No new owner signature is needed per holder. (This is the runtime's own end-to-end test, `challenge_resolve_native_read_then_active_cutoff_denies`.)
+Alice shares a document with "anyone at `example.com`". Her browser signs one v2 policy with requirement profile `tinycloud.email-domain-proof/v1` and registers it with both roots. Bob opens the link, proves a mailbox at `example.com`, and gets a session UCAN to his `did:key`. Alice never signs anything for Bob. If she revokes the enforcement root, Bob's next read is refused.
 
 ## Status & drift
 
-`in-progress`. The **v0 contracts are frozen** in `spec/` (schemas, test vectors, the Signed Object Profile) and `policy-core` types + canonicalization + containment + grant-presentation validation are shipped; `policy-runtime` and `policy-evidence-vc` exist and pass an end-to-end vector test (despite the spec README still calling the runtime crates "not yet implemented"). **Not implemented here:** any HTTP service, persistence, or [[nodes|node]] embedding; node-side revocation / invocation enforcement (specified in `spec/revocation.md`, not built); and `issue_challenge` currently emits `chal_{nonce}` while the schema expects a `gchal_…` id. The biggest honest caveat is above: **the node does not yet consume the engine** — treat the L1-internal boundary as design-intent. **Repo status:** the cited `policy-engine` repo is not public under TinyCloudLabs, and this design has been superseded by Data Exchange v0 (the `sssoforth/information-sphere` lineage); treat this page as historical context, not the current build target. See [[meta/contradictions]].
+`shipped`. Policy v3 has been embedded in the Node since 1.16.0 and is in production Node 1.17.3 (`tinycloud-node@05c6a93`); the [[sdk/packages|Share SDK]] in SDK 3.0.0 publishes against it. Not shipped: a general condition grammar (`allOf`/`anyOf`/evidence trees). A policy carries one credential requirement (see [[policy-as-central-primitive]]).
+
+### History: policy-core v0
+
+Before Policy v3, the design was a standalone Rust workspace (`policy-core`, `policy-runtime`, `policy-evidence-vc`). Its schema was `xyz.tinycloud.policy/policy/v0`, with a `when` expression, a `GrantPresentation`, holder enrollment, and a `portable-delegation` output. That engine was never wired into the Node server. In Node 1.17.3 it is used only by test crates (such as `test/m1-realdata-e2e`), never by the server. Policy v3 kept the core ideas: an owner-signed rule, a capability ceiling, credential evidence the engine verifies itself, and grants that cannot outlive their evidence. It replaced the transport with Node routes, sibling roots, and ordinary session UCANs.
 
 ## Sources
-- `policy-engine`: `src/lib.rs` (public surface), `src/types.rs:49` (`Policy`/`Expression`/`GrantTemplate`), `crates/policy-runtime/src/lib.rs` (`PolicyRuntime::issue_challenge`/`resolve`, end-to-end test), `spec/README.md` + `spec/mvp-doc-reconciliation.md` (frozen v0 contract, "policy-engine emits native authority")
-- Verified absence: `tinycloud-node` has no `policy-core`/`policy-runtime` Cargo dependency (node does not yet consume the engine)
+- `tinycloud-node` (`05c6a93`, Node 1.17.3): `tinycloud-node-server/src/policy_v3.rs` (routes :1768, 1962, 2021; sibling roots :3959-4016; session lifetime :802-834; invocation gate :352-420), `CHANGELOG.md` (1.16.0 embedding, 1.17.3 TC-529/TC-597), `test/m1-realdata-e2e/Cargo.toml:12-15` (policy-core used only by test crates)
+- `js-sdk` (`d43e51ea`, SDK 3.0.0): `packages/share-sdk/src/addressed-publish.ts:343` (owner creates both roots)

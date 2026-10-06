@@ -12,7 +12,7 @@ sources:
   - repo: tinycloud-node
     path: tinycloud-sdk-wasm/src/session.rs
 tags: [sdk, sign-in]
-timestamp: 2026-06-23
+timestamp: 2026-10-05
 ---
 
 # Sign-In Flow
@@ -25,7 +25,7 @@ The **sign-in flow** is the SDK sequence that turns one wallet signature into a 
 
 ## Sequence
 
-1. **Resolve** address/chain and hosts; **create a [[session-keys|session key]]** (WASM `TCWSessionManager`, `tinycloud-sdk-wasm/src/session.rs`).
+1. **Resolve** address/chain and hosts; **create a [[session-keys|session key]]** (WASM `TCWSessionManager`, `packages/sdk-rs/src/session/manager.rs`).
 2. **`resolveSignInCapabilities`** → the [[capabilities]] the [[manifest-model|manifest]] needs.
 3. **`prepareSession`** builds the [[siwe|SIWE]]-[[recap|ReCap]] message.
 4. **Wallet signs** `prepared.siwe` → a [[cacao|CACAO]].
@@ -34,9 +34,11 @@ The **sign-in flow** is the SDK sequence that turns one wallet signature into a 
 
 Thereafter the [[session-keys|session key]] signs [[invocation|invocations]] with no further wallet prompts. The platform entry is `NodeUserAuthorization.signIn` (`packages/node-sdk/...`); `prepareSessionForSigning`/`signInWithPreparedSession` support external signers.
 
+In the browser, `TinyCloudWeb` (SDK 3.0) signs through the wallet's **raw EIP-1193 provider** — `window.ethereum`, or [[openkey|OpenKey]]'s `OpenKeyProvider` — and calls `provider.request()` directly; ethers-style provider wrappers and the standalone RPC provider factory were removed in 3.0. Other entry points reach the same session shape: OAuth `tinycloud:manage-key` signing with the account's primary OpenKey key, and the [[cli|CLI]]'s browser, paste, and [[device-authorization|device]] logins.
+
 ## Crypto
 
-One wallet signature (step 4) authorizes the whole [[capability-composition|composed capability set]]; the node validates the resulting chain via [[cacao-chain-validation]]. Replay is bounded by the SIWE nonce + time.
+One wallet signature (step 4) authorizes the whole [[capability-composition|composed capability set]]; the node validates the resulting chain via [[cacao-chain-validation]]. Replay is bounded by the SIWE nonce + time. The session lasts `sessionExpirationMs`, 30 days by default since SDK 3.0 (see [[session-keys]]). Through OpenKey the owner may uncheck capabilities at consent, so the signed SIWE can be narrower than the prepared one; clients complete with the signed message OpenKey returns.
 
 ## Example
 
@@ -67,7 +69,7 @@ const { tcw, session } = await createAndSignIn(web3Provider, {
 // tcw.did is the owner DID; `session.siwe` + `session.signature` verify the backend session.
 ```
 
-Under `@tinyboilerplate/client` this is `@tinycloud/web-sdk`'s `TinyCloudWeb.signIn()`; the `capabilityRequest` is the [[capability-composition|composed]] union so the single signature also pre-authorizes the backend [[delegation-api|delegation]]. See [[getting-started]] for the full run.
+Under `@tinyboilerplate/client` this is `@tinycloud/web-sdk`'s `TinyCloudWeb.signIn()` (the helper's `web3Provider` is already an EIP-1193 provider; tinyboilerplate still pins SDK 2.6.3); the `capabilityRequest` is the [[capability-composition|composed]] union so the single signature also pre-authorizes the backend [[delegation-api|delegation]]. See [[getting-started]] for the full run.
 
 ## Relationships
 

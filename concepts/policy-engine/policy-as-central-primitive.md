@@ -1,74 +1,59 @@
 ---
 type: concept
 title: Policy as Central Primitive
-description: The framing that elevates permissioning above storage — a signed Policy, not a bucket, is the unit a TinyCloud owner reasons about, grounded in the `Policy` type and its `when`/`grant`/ceiling structure.
+description: The framing that a signed, conditional rule over the owner's authority, not a bucket, is what an owner authors. Shipped today as a Policy v3 document with one credential requirement; a general condition grammar is not in production.
 status: in-progress
 layer: protocol
 sources:
-  - repo: policy-engine
-    path: src/types.rs
-  - repo: policy-engine
-    path: src/evaluator.rs
-  - repo: policy-engine
-    path: src/capability.rs
+  - repo: tinycloud-node
+    path: tinycloud-node-server/src/policy_v3.rs@05c6a93
+  - repo: tinycloud-node
+    path: test/m1-realdata-e2e/Cargo.toml@05c6a93
 tags: [policy-engine, framing]
-timestamp: 2026-06-23
+timestamp: 2026-10-05
 ---
 
 # Policy as Central Primitive
 
-**Policy as central primitive** is the framing that the unit a TinyCloud owner reasons about is not a store or a bucket but a **signed, conditional rule over their authority** — a [[overview|Policy]] that says *who*, *under what evidence*, may receive *what subset* of the owner's [[capabilities|capabilities]], for *how long*. Storage is downstream; permissioning is the thing you author. This is the [[architecture-layers|Layer 1]] elevation of the [[policy-engine/overview|policy engine]] above the service layer.
+**Policy as central primitive** is the framing that what a TinyCloud owner authors is a **signed, conditional rule over their authority**. The rule says who may receive which subset of the owner's [[capabilities]], on what evidence, and for how long. Storage sits below it. The [[policy-engine/overview|policy engine]] is the machinery that turns that rule into delegations.
 
 ## Role
 
-In the bare [[capabilities|capability]] model the owner is the only source of authority and must personally sign every [[delegation]]. That is *imperative* permissioning: it does not compose with facts discovered later (a credential the holder will earn, an agent that will be enrolled tomorrow). The central-primitive framing makes the **rule** first-class: the owner signs a Policy once, and the engine becomes a programmable issuer of grants that stays *strictly inside* the owner's authority. The owner's mental model shifts from "I granted Alice read on bucket X" to "anyone proving Y may read X for an hour" — permissioning, not plumbing, is the primitive.
+With bare [[delegation]] the owner must sign every grant to a known key. That does not cover facts that emerge later, such as a recipient who will prove an email address next week. Making the rule first-class means the owner signs once and the [[nodes|Node]] grants on demand, always inside what the owner holds. The owner's mental model shifts from "I granted Bob read on X" to "anyone who proves Y may read X".
 
 ## Mechanics
 
-Three properties in `policy-core` make the framing concrete and *safe*:
+What production Node 1.17.3 implements of this framing:
 
-### 1. A Policy is a signed rule, not a token
-
-`Policy` (`src/types.rs:49`) carries a `when: Expression` and a `grant: GrantTemplate`, both signed by the owner under the [[overview#shape|Signed Object Profile]]. The Policy is not itself authority — it is a *recipe* for minting authority. Evaluation is pure: `evaluate_expression(expression, eligible_subject_did, satisfied_evidence)` (`src/evaluator.rs:76`) is a total boolean over the `when` tree.
-
-### 2. The `when` grammar is small and total
-
-`Expression` (`src/types.rs:120`) has exactly four shapes:
-
-- **`allOf [Expression]`** — every child must hold.
-- **`anyOf [Expression]`** — some child must hold.
-- **`subject { did }`** — the request's `eligible_subject_did` must equal this DID.
-- **`evidence { EvidenceRequirement }`** — a named requirement (`requirement_id`, a `verifier`, opaque `requirements`, optional `authority`/`freshness`) must appear in the *satisfied* evidence set. The engine only counts evidence it has **independently verified** ([[credential-gated-delegation]]); the holder cannot assert satisfaction.
-
-There are no negations, no time arithmetic, no side effects — the grammar is deliberately decidable, which is what lets a Policy be audited by reading it.
-
-### 3. The grant can only narrow the owner's authority
-
-The Policy's `resource.permissions_ceiling` is a list of [[capabilities|PolicyCapability]] (`src/capability.rs:83`: `{ service, space, path, actions, caveats? }`, services restricted to `tinycloud.kv | tinycloud.sql | tinycloud.vfs`). Every requested capability is checked by **containment** — `PolicyCapability::contains` (`capability.rs:124`): exact `service` and `space`, path-prefix semantics (`tinycloud.sql` requires exact path; others allow trailing-slash prefix), action-subset, and caveat narrowing (a ceiling with no caveats permits any; SQL caveats must themselves contain). A request exceeding the ceiling is rejected `requested-capabilities-exceeded`. So the engine is structurally incapable of emitting more than the owner holds — it is [[attenuation]] expressed declaratively.
+- **The rule is a signed document and a principal.** A Policy v2 document (`xyz.tinycloud.policy/policy/v2`) is content-addressed and signed by `ownerDid`. Its authority root is delegated to `did:tinycloud:policy:<digest>`, so the policy itself holds the authority it can hand out (see [[policy-v3-admission]]).
+- **One condition.** A v2 policy carries exactly one `credentialRequirement`: an exact email or an email domain, from a pinned issuer (see [[credential-gated-delegation]]). A v1 policy has no `credentialRequirement`; its mint takes a signed `claim` plus presentation instead of a credential.
+- **A hard ceiling.** `capabilityCeiling` bounds every session. Sessions and their descendants are checked with `capabilities_are_contained` ([[attenuation]]).
+- **Owner holds what it shares.** At registration the owner must hold every capability its roots grant (TC-597), so a policy cannot create authority.
 
 ## Shape
 
-The primitive, reduced to its load-bearing fields:
-
 ```
-Policy.when    : Expression   = allOf | anyOf | subject{did} | evidence{EvidenceRequirement}
-Policy.grant   : GrantTemplate = { output: portable-delegation, max_ttl_seconds, delegation_mode, revocation }
-Policy.resource.permissions_ceiling : [PolicyCapability]   // the hard upper bound on what can be granted
+Policy v2 = { schema, policyId, ownerDid, createdAt, expiresAt?,
+              contentSource, capabilityCeiling: [...], credentialRequirement, signature }
 ```
 
-`delegation_mode` is `terminal` (grant is a leaf, cannot be re-delegated) or `attenuable`; `revocation` is `refresh-only` or `active-cutoff`. These three fields *are* the policy author's vocabulary.
+The author's vocabulary today is: which content (`contentSource`), what at most (`capabilityCeiling`), which credential (`credentialRequirement`), and until when (`expiresAt`, plus the roots' window).
 
 ## Relationships
 
-Is the framing of the [[policy-engine/overview|policy engine]]; its `when` grammar gates a [[capabilities|capability]] grant; its `permissions_ceiling` enforces [[attenuation|containment]] over the owner's authority; `evidence{}` conditions are satisfied by [[credential-gated-delegation|verified credentials]] from [[credentials|OpenCredentials]]; the enrolled-holder dimension is [[agent-transaction-policy]]; it sits beside [[capabilities]] and [[openkey|OpenKey]] in [[architecture-layers|Layer 1]].
+The framing behind the [[policy-engine/overview|policy engine]]; implemented by [[policy-v3-admission]]; its only shipped condition is [[credential-gated-delegation]], supplied by [[feeds-policy-engine|OpenCredentials]]; its ceiling is [[attenuation]]; the agent-holder generalization is [[agent-transaction-policy]]; it sits beside [[capabilities]] and [[openkey|OpenKey]] in [[architecture-layers|Layer 1]].
 
 ## Example
 
-`when = allOf[ subject{ did:key:z6Mk…agent }, evidence{ "email-domain" } ]` with `permissions_ceiling = [ tinycloud.sql/read over …/transcripts.sqlite ]`. Read aloud: *"the grant goes only to this enrolled agent, only if it also proves a trusted email-domain credential, and even then only the read capability I ceiling'd."* The owner authored one signed object; the engine will mint as many one-hour read grants as there are valid presentations, never exceeding that single read capability.
+"Anyone who proves a mailbox at `example.com` may read `notes/plan.md` until Friday." That is a v2 policy whose `capabilityCeiling` is one `tinycloud.kv/get`, whose `credentialRequirement` uses profile `tinycloud.email-domain-proof/v1`, and whose roots expire on Friday. The owner signs it once; the Node mints a session for each person who qualifies.
 
 ## Status & drift
 
-`in-progress`. The `Policy` type, the `when` grammar, `evaluate_expression`, and `PolicyCapability::contains` are **frozen v0 + shipped** in `policy-core`. The *framing* — permissioning as the protocol's central primitive, above storage — is the [[architecture-layers|locked]] team position; its full realization depends on [[nodes|node]] consumption of the engine, which is still design-intent (see [[overview#status--drift]]). **Repo status:** the cited `policy-engine` repo is not public under TinyCloudLabs, and this design has been superseded by Data Exchange v0 (the `sssoforth/information-sphere` lineage); treat this page as historical context, not the current build target. See [[meta/contradictions]].
+`in-progress`. Shipped: signed policy documents, the policy-as-principal root, the capability ceiling, a single credential requirement, and the owner-holds check. Not in production: a general condition grammar that composes `allOf`, `anyOf`, `subject{did}` and multiple `evidence{}` requirements into one tree. Delegation modes (`terminal`/`attenuable`) are also not a policy field; re-delegation depth is fixed by the Node at 8.
+
+### History: the v0 `when` grammar
+
+The `policy-core` v0 design (`xyz.tinycloud.policy/policy/v0`) had a recursive `when` expression (`allOf | anyOf | subject{did} | evidence{…}`), a `permissions_ceiling` of `PolicyCapability` entries, and a `grant` template with `max_ttl_seconds`, `delegation_mode` and `revocation`. That engine was never wired into the Node server. In Node 1.17.3 it is used only by test crates (such as `test/m1-realdata-e2e`), never by the server. Policy v3 kept the ceiling and verified-evidence ideas but not the expression tree.
 
 ## Sources
-- `policy-engine`: `src/types.rs:49,120,77` (`Policy`, `Expression`, `GrantTemplate`), `src/evaluator.rs:76` (`evaluate_expression`), `src/capability.rs:83,124` (`PolicyCapability`, `contains`)
+- `tinycloud-node` (`05c6a93`, Node 1.17.3): `tinycloud-node-server/src/policy_v3.rs` (policy schemas :53-54; policy document keys :4032; credential requirement :4185; owner-holds check :742; containment :836), `test/m1-realdata-e2e/Cargo.toml:12-15`

@@ -1,61 +1,74 @@
 ---
 type: concept
 title: Witness Service
-description: The OpenCredentials issuer — an axum HTTP service at witness.credentials.org that runs verification flows and issues credentials signed as did:web:issuer.tinycloud.xyz, with its key derived inside a DStack TEE.
-status: in-progress
+description: The OpenCredentials issuer service at witness.credentials.org — a dstack TEE that runs holder-bound acquisitions (8-digit mailbox codes) and signs vc+sd-jwt credentials as did:web:issuer.credentials.org.
+status: shipped
 layer: tinycloud-app
 sources:
   - repo: OpenCredentials
-    path: rust/opencredentials_witness/src/main.rs
+    path: rust/opencredentials_witness/src/credentials/mod.rs@60364a9
   - repo: OpenCredentials
-    path: rust/opencredentials_witness/src/routes.rs
+    path: rust/opencredentials_witness/src/main.rs@60364a9
   - repo: OpenCredentials
-    path: rust/opencredentials_witness/src/config.rs
+    path: rust/opencredentials_witness/src/routes.rs@60364a9
+  - repo: OpenCredentials
+    path: README.md@60364a9
 tags: [credentials, witness, issuer]
-timestamp: 2026-06-23
+timestamp: 2026-10-05
 ---
 
 # Witness Service
 
-The **witness service** is the [[credentials|OpenCredentials]] **issuer**: an HTTP service (deployed at `https://witness.credentials.org`) that verifies a real-world fact about a subject and, on success, signs a credential as **`did:web:issuer.tinycloud.xyz`**. It "witnesses" a claim — that the subject controls an email address, a DNS record, a GitHub account — and converts that observation into a portable [[sd-jwt-vc|SD-JWT / W3C VC]] that anyone, including the [[policy-engine/overview|policy engine]], can later verify against the issuer's published DID document.
+The **witness service** is the [[opencredentials|OpenCredentials]] issuer, deployed at `https://witness.credentials.org`. It "witnesses" a claim, such as that a holder controls a mailbox, and signs a credential as **`did:web:issuer.credentials.org`**. Anyone, including the [[nodes|Node]], can later verify that credential against the issuer's published key with no further contact with the witness.
 
 ## Role
 
-The witness is the trust anchor of [[credentials|OpenCredentials]] within [[architecture-layers#layer-2--tinycloud-apps|Layer 2]]. A credential is only as trustworthy as the entity that signed it, so the witness's identity (`did:web:issuer.tinycloud.xyz`) and key custody matter: it is the issuer a [[policy-as-central-primitive|Policy]] names in `authority.accepted_issuers` when it [[credential-gated-delegation|gates a delegation]] on credential evidence. The verification logic lives off-chain (talking to email providers, DNS, GitHub APIs); the witness's signature is what makes the result self-verifying afterward.
+The witness is the trust anchor of [[opencredentials|OpenCredentials]]: a credential is only as good as its signer. Its identity and key custody are what a Node operator pins when it accepts credentials for [[credential-gated-delegation]]. The issuer's DID document is hosted separately, at `issuer.credentials.org`, so the identity resolves independently of the service that signs.
 
 ## Mechanics
 
-The service is an **axum** `Router` (`rust/opencredentials_witness/src/main.rs`) exposing:
+### Acquisition protocol (`tinycloud.credentials/acquisition/v1`)
 
-- `GET /.well-known/did.json` — the issuer's DID document (Ed25519 verification key, `JsonWebKey2020`), generated from the issuer JWK with the private `d` field stripped (`config::did_document`).
-- `GET /capabilities` — which verification flows + credential formats are enabled.
-- `POST /instructions` → `POST /statement` → `POST /witness_jwt | /witness_sd_jwt | /witness_ld` — the three-step issuance handshake: the client gets flow instructions, submits a signed statement proving the fact, and receives the issued credential in the requested format.
-- `POST /verify` — stateless verification of a presented VC.
+The routes TinyCloud uses live under `/v1/acquisitions`. Discovery is at `/.well-known/opencredentials` and `/v1/credential-types`.
 
-Which flows are active is set per deployment by env vars (`config::new_flow`): no-API-key flows (DNS, GitHub, Reddit, same-controller assertion, attestation) default on; API-key flows (email via Resend, NFT via Alchemy, POAP, Twitter, SoundCloud) enable when their key is present.
+1. **Create.** `POST /v1/acquisitions` with a `holderDid` and a profile. The request lasts 10 minutes.
+2. **Interact.** The user follows an interaction page on `credentials.org`. For a mailbox, the witness emails an **8-digit**, uniformly random code. A challenge lasts 5 minutes and allows at most 5 proof attempts.
+3. **Prove.** `POST /v1/acquisitions/{id}/proof`.
+4. **Holder signature.** `POST /v1/acquisitions/{id}/holder-signature`: the holder signs with the requesting DID's key; `issue` refuses (`holder_signature_required`) until this succeeds.
+5. **Issue.** `POST /v1/acquisitions/{id}/issue`, then `GET …/result`, returns a `vc+sd-jwt` credential whose subject and `holderBinding.did` are the requesting DID, with status freshness 300 s.
 
-### Key custody — DStack TEE
+Two mailbox profiles back TinyCloud shares:
 
-The Ed25519 signing key is, in production, **derived inside a DStack TEE** (`KEYS_TYPE=dstack`): `build_issuer_dstack` calls `dstack::get_key("opencredentials/witness/signing-key")` to obtain a TEE-bound seed, so the issuer key is never handled as plaintext outside the enclave. Without `dstack`, the key comes from `OPENCREDENTIALS_SK` (development). This is the same [[nodes|DStack confidential-compute]] basis used elsewhere in TinyCloud.
+- `tinycloud.email-proof/v1`: for one exact mailbox. It discloses `email` and its `emailDomain`.
+- `tinycloud.email-domain-proof/v1`: for shares addressed to a whole domain. The witness **derives** `emailDomain` from the canonical form of the mailbox that passed the code. The acquisition input is only `{email}`, so a client cannot assert a domain. Domain-profile challenges are rate-limited.
+
+### Key custody: dstack TEE
+
+In production the Ed25519 signing key is derived inside a dstack TEE: `dstack::get_key("opencredentials/witness/signing-key")`, selected by `KEYS_TYPE=dstack`. It is never handled as plaintext outside the enclave. This is the same confidential-compute basis as the [[tee-dstack|Node's TEE]].
+
+### Legacy routes
+
+TinyCloud policy admission uses only the acquisition flow above.
 
 ## Shape
 
-- **Issuer DID:** `did:web:issuer.tinycloud.xyz` (set via `DID_WEB`).
-- **Service host:** `https://witness.credentials.org` (the client's `DEFAULT_WITNESS_URL`).
-- **Signature:** Ed25519 (`JsonWebKey2020` / `EdDSA`), key derived in a DStack TEE.
-- **Issuance handshake:** `instructions → statement → witness_{jwt|sd_jwt|ld}`.
+- **Issuer DID:** `did:web:issuer.credentials.org`; DID document at `issuer.credentials.org`.
+- **Service host:** `https://witness.credentials.org`; interaction origin `https://credentials.org`.
+- **Signature:** Ed25519 / `EdDSA`, TEE-derived key.
+- **Mailbox code:** 8 digits; 5 attempts; 5-minute challenge; 10-minute request.
 
 ## Relationships
 
-The issuer half of [[credentials|OpenCredentials]]; signs [[sd-jwt-vc|SD-JWT / W3C VCs]]; its DID `did:web:issuer.tinycloud.xyz` is the trusted issuer a [[policy-as-central-primitive|Policy]] lists in `accepted_issuers` for [[credential-gated-delegation|credential-gated delegation]]; its key is protected by the same [[nodes|DStack TEE]] confidential-compute model; identified by a [[dids|did:web]]; an [[architecture-layers#layer-2--tinycloud-apps|L2]] component.
+The issuer half of [[opencredentials|OpenCredentials]]; signs [[sd-jwt-vc|SD-JWT VCs]]; its DID is the trusted issuer the Node pins for [[credential-gated-delegation]] in [[policy-v3-admission]]; feeds [[feeds-policy-engine|the policy engine]]; key protected by a [[tee-dstack|dstack TEE]]; also the audience the Node names when it authorizes a Share email (see [[native-sharing]]); identified by a [[dids|did:web]].
 
 ## Example
 
-A client `POST`s an email-verification statement to `https://witness.credentials.org`. The service runs the email flow, confirms the user controls `sam@tinycloud.xyz`, and returns from `/witness_sd_jwt` an SD-JWT credential signed by the TEE-held key of `did:web:issuer.tinycloud.xyz`. Months later the [[policy-engine/overview|policy engine]] resolves that same DID's `/.well-known/did.json`, finds the verification key, and [[credential-gated-delegation|verifies the credential]] with no further contact with the witness.
+Bob's browser posts an acquisition for profile `tinycloud.email-domain-proof/v1` and his `did:key`. The witness emails `bob@example.com` a code such as `48213906`. Bob enters it on `credentials.org`, and the witness issues a credential with `email` and the derived `emailDomain: example.com`, signed by its TEE-held key. The Node later verifies it against its pinned copy of `did:web:issuer.credentials.org`'s key.
 
 ## Status & drift
 
-`in-progress`. The axum service, the route set, the DStack-derived issuer key, and `did.json` generation are implemented. Many verification flows exist in config, but the **only flow currently wired through to TinyCloud authorization is email** (the policy engine's `opencredentials.email/v1` verifier — see [[credential-gated-delegation]]). The `did:web:issuer.tinycloud.xyz` / `witness.credentials.org` hostnames reflect the intended deployment; treat exact operational endpoints as deployment config. See [[meta/contradictions]].
+`shipped`. The acquisition API and both mailbox profiles back production email and domain shares. Earlier versions of this page said the witness signs as `did:web:issuer.tinycloud.xyz`; that is wrong. The production issuer is `did:web:issuer.credentials.org` (OpenCredentials README; Node production trust-bundle contract). Other flows exist (X `tinycloud.x-verification/v2`, DNS, GitHub, …) but are not accepted by Node policy admission.
 
 ## Sources
-- `OpenCredentials`: `rust/opencredentials_witness/src/main.rs` (axum routes, DStack key derivation), `rust/opencredentials_witness/src/routes.rs` (handler set), `rust/opencredentials_witness/src/config.rs` (`new_flow`, `did_document`, `did:web` issuer)
+- `OpenCredentials` (`60364a9`): `rust/opencredentials_witness/src/credentials/mod.rs` (constants :32-70 incl. 8-digit code :64 and profiles :38, 42; routes :856-883; domain derivation :2013-2024; issuance :1790-1950), `rust/opencredentials_witness/src/main.rs` (dstack key derivation), `rust/opencredentials_witness/src/routes.rs:36-45` (legacy routes), `README.md:16-25` (two-host architecture)
+- `tinycloud-node` (`05c6a93`): `deploy/share-email/production-trust-bundle-contract.md:42-45`

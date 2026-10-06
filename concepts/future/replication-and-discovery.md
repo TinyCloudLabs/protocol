@@ -6,12 +6,16 @@ status: planned
 layer: protocol
 sources:
   - repo: tinycloud-node
-    path: tinycloud-core/src/replication/mod.rs
+    path: tinycloud-core/src/lib.rs@05c6a93
   - repo: tinycloud-node
-    path: tinycloud-core/src/replication/recon.rs
-provenance_note: actively under development; the replication module exists in tinycloud-core but is not declared in lib.rs (not compiled or mounted) and peer discovery is not implemented as of 2026-06
+    path: tinycloud-core/src/replication/mod.rs@feat/replication-e2e-bootstrap
+  - repo: tinycloud-node
+    path: docs/kv-sync.md@d7f511f
+  - repo: whitepaper
+    path: README.md
+provenance_note: no replication module is in production Node 1.17.3 or node main; a P2P prototype exists only on the unmerged feat/replication-e2e-bootstrap branch and the current plan does not port it; peer discovery is not implemented
 tags: [future, replication, discovery]
-timestamp: 2026-06-23
+timestamp: 2026-10-05
 ---
 
 # Replication & Peer Discovery (Future)
@@ -24,12 +28,14 @@ A [[autonomic-space|space]]'s [[consistency|consistency]] model already defines 
 
 ## Current status
 
-**Actively under development.** The `replication/` module exists in `tinycloud-core` but is **not declared in `lib.rs`** — it is not compiled or mounted — and **peer discovery is not implemented** as of 2026-06. The whitepaper sketches discovery via host-delegation multi-addresses, DID-document service endpoints, and a manifest registry, but no gossip/broadcast or epoch-sync is wired up. Treat the discovery mechanism as design intent.
+**Planned.** No replication module is in production Node 1.17.3 (`05c6a93`) or on node `main` (`d7f511f`). A peer-to-peer prototype (`tinycloud-core/src/replication/`) exists only on the unmerged `feat/replication-e2e-bootstrap` branch, and the current plan does not port it. **Peer discovery is not implemented.** The whitepaper sketches discovery via host-delegation multi-addresses, DID-document service endpoints, and a manifest registry, but no gossip/broadcast or epoch-sync exists. Treat both as design intent.
+
+The work in progress is narrower: **local read replicas** on client devices (Linear TC-12, TC-502), built on the [[kv]] change feed `tinycloud.kv/sync` (node `main`, unreleased) and the SDK's `kv.changes()` (3.1.0 beta). The host node stays the only writer, so this needs neither peer discovery nor cross-node conflict resolution. See [[consistency/replication]].
 
 ## See also
 
-The live concept tracking the unmounted module is [[consistency/replication]]; it builds on [[consistency|consistency]], [[epochs-dag|the epoch DAG]], and [[conflict-resolution|conflict resolution]]. The "[[future/light-clients|Recon]]" light-client direction is a related but distinct line of work. Sits in [[architecture-layers|Layer 1]]; see the [[future/roadmap|roadmap]].
+The live concept covering both tracks is [[consistency/replication]]; it builds on [[consistency|consistency]], [[epochs-dag|the epoch DAG]], and [[conflict-resolution|conflict resolution]]. The "[[future/light-clients|Recon]]" light-client direction is a related but distinct line of work. Sits in [[architecture-layers|Layer 1]]; see the [[future/roadmap|roadmap]].
 
 ## Sources
-- `tinycloud-node`: `replication/mod.rs`, `replication/recon.rs` (present, not mounted in `lib.rs`)
+- `tinycloud-node` @05c6a93 / @d7f511f: no `replication/` module; branch `feat/replication-e2e-bootstrap` (unmerged): `tinycloud-core/src/replication/{mod,recon}.rs` (prototype); @d7f511f `docs/kv-sync.md` (change feed)
 - `whitepaper`: `README.md` §5 (peer-to-peer replication / host discovery)

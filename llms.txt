@@ -10,7 +10,8 @@
 - [Identity](concepts/identity/index.md): DIDs, SIWE, session keys, OpenKey.
 - [Spaces](concepts/spaces/index.md): The autonomic space primitive, addressing grammar, hosting.
 - [Authorization](concepts/authorization/index.md): Capabilities, delegation, invocation, CACAO validation.
-- [Policy Engine](concepts/policy-engine/index.md): The central permissioning primitive.
+- [Policy Engine](concepts/policy-engine/index.md): The central permissioning primitive; Policy v3 admission in the Node.
+- [Sharing](concepts/sharing/index.md): Native bearer and addressed (Policy/v3) Share links.
 - [Services](concepts/services/index.md): Node-hosted, capability-gated services (KV, SQL, hooks, ...).
 - [Encryption](concepts/encryption/index.md): At-rest, encryption networks, threshold decryption.
 - [Storage](concepts/storage/index.md): Blob store, metadata DB, per-space SQL.
@@ -20,8 +21,11 @@
 - [Secrets](concepts/secrets/index.md): Secrets space and encrypted vault entries.
 - [Credentials](concepts/credentials/index.md): OpenCredentials feeding the policy engine.
 - [Nodes](concepts/nodes/index.md): Node architecture, TEE/DStack, host delegations.
-- [SDK](concepts/sdk/index.md): How to use the protocol from code.
+- [SDK](concepts/sdk/index.md): How to use the protocol from code (SDK 3.0, CLI 1.0).
+- [Agents](concepts/agents/index.md): MCP server and agent skills.
 - [Future](concepts/future/index.md): Roadmap and design-intent items.
+
+Developer how-to guides: https://docs.tinycloud.xyz (index: https://docs.tinycloud.xyz/llms.txt).
 
 ## Meta
 

@@ -2,7 +2,7 @@
 type: index
 title: TinyCloud Protocol
 description: Canonical agent-readable knowledge bundle for the TinyCloud data protocol.
-timestamp: 2026-06-22
+timestamp: 2026-10-05
 ---
 
 # TinyCloud Protocol
@@ -28,7 +28,8 @@ Want to build on TinyCloud? Start with the [Build an App](concepts/build/index.m
 ## Spaces & Authorization
 - [Spaces](concepts/spaces/index.md) — The autonomic space primitive, addressing grammar, and hosting.
 - [Authorization](concepts/authorization/index.md) — Capabilities, delegation, invocation, and validation.
-- [Policy Engine](concepts/policy-engine/index.md) — The central permissioning primitive.
+- [Policy Engine](concepts/policy-engine/index.md) — The central permissioning primitive; Policy v3 admission in the Node.
+- [Sharing](concepts/sharing/index.md) — Native bearer and addressed Share links.
 
 ## Services & Data
 - [Services](concepts/services/index.md) — Node-hosted, capability-gated services.
@@ -43,8 +44,12 @@ Want to build on TinyCloud? Start with the [Build an App](concepts/build/index.m
 
 ## Infrastructure & Usage
 - [Nodes / Hosting](concepts/nodes/index.md) — Node architecture, TEE, and host delegations.
-- [SDK](concepts/sdk/index.md) — How to use the protocol from code.
+- [SDK](concepts/sdk/index.md) — How to use the protocol from code: packages, CLI, sign-in.
+- [Agents](concepts/agents/index.md) — MCP server and agent skills: delegated access for AI agents.
 - [Future Directions](concepts/future/index.md) — Roadmap and design-intent items.
+
+For step-by-step developer guides (install, quickstarts, CLI reference, troubleshooting), see
+[docs.tinycloud.xyz](https://docs.tinycloud.xyz).
 
 ## Meta
 - [Glossary](meta/glossary.md) — Canonical vocabulary and retired aliases.

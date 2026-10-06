@@ -6,11 +6,13 @@ status: in-progress
 layer: protocol
 sources:
   - repo: tinycloud-node
-    path: tinycloud-node-server/src/auth_guards.rs
-  - repo: tinycloud-core
-    path: tinycloud-core/src/models/invocation.rs
+    path: tinycloud-node-server/src/auth_guards.rs@05c6a93
+  - repo: tinycloud-node
+    path: tinycloud-core/src/models/invocation.rs@05c6a93
+  - repo: tinycloud-node
+    path: docs/kv-sync.md@d7f511f
 tags: [consistency, hybrid]
-timestamp: 2026-06-23
+timestamp: 2026-10-05
 ---
 
 # Hybrid Consistency
@@ -19,12 +21,13 @@ timestamp: 2026-06-23
 
 ## Role
 
-It is the team's stated consistency philosophy for [[consistency-model|authorization state]] and data alike. It explains why [[revocation]] and [[cacao-chain-validation]] are evaluated synchronously and locally, while [[replication]] of the event log is allowed to lag.
+It is the team's stated consistency philosophy for [[consistency-model|authorization state]] and data alike. It explains why [[revocation]] and [[cacao-chain-validation]] are evaluated synchronously and locally, while [[replication]] of data is allowed to lag.
 
 ## Mechanics (intended vs current)
 
-- **Strong, local (shipped):** every [[invocation]] is authorized synchronously against the node's current view ([[auth_guards.rs|`auth_guards`]]); writes are ordered as [[epochs-dag|epoch events]].
-- **Eventual, distributed (design-intent):** cross-peer convergence rides on [[conflict-resolution|LWW]] over the DAG via the [[replication]] subsystem — which is **present but not mounted**, so today the system is effectively single-node-strong.
+- **Strong, local (shipped):** every [[invocation]] is authorized synchronously against the node's current view (`auth_guards.rs`); writes are ordered as [[epochs-dag|epoch events]].
+- **Eventual, read-only copies (in-progress):** local read replicas on client devices follow the host through the [[kv]] change feed (`tinycloud.kv/sync`, on node `main`, unreleased). They may lag, but they never authorize anything: every feed page is itself an authorized invocation, and the host node stays the only writer.
+- **Eventual, multi-host (design-intent):** cross-peer convergence would ride on [[conflict-resolution|LWW]] over the DAG via multi-host [[replication]]. No replication code is in production Node 1.17.3 or on `main`, so today the system is single-node-strong.
 
 ## Relationships
 
@@ -32,7 +35,8 @@ The umbrella over [[consistency-model]] (authorization) and [[conflict-resolutio
 
 ## Status & drift
 
-`in-progress` / design-intent. Single-node strong consistency is real and shipped; the distributed-eventual half is the planned model pending [[replication]]. (Framing sourced from team design discussion; the implemented pieces are the local authorization path.)
+`in-progress` / design-intent. Single-node strong consistency is real and shipped (Node 1.17.3); local read replicas are in progress; multi-host eventual consistency is planned pending [[replication]]. (Framing sourced from team design discussion; the implemented pieces are the local authorization path.)
 
 ## Sources
-- `tinycloud-node`: `tinycloud-node-server/src/auth_guards.rs`, `tinycloud-core/src/models/invocation.rs` (the shipped strong-local path)
+- `tinycloud-node` @05c6a93 (Node 1.17.3): `tinycloud-node-server/src/auth_guards.rs`, `tinycloud-core/src/models/invocation.rs` (the shipped strong-local path)
+- `tinycloud-node` @d7f511f (`main`): `docs/kv-sync.md` (change feed for local read replicas)

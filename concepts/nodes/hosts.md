@@ -6,11 +6,11 @@ status: shipped
 layer: protocol
 sources:
   - repo: tinycloud-node
-    path: tinycloud-sdk-wasm/src/host.rs
+    path: tinycloud-sdk-wasm/src/host.rs@05c6a93
   - repo: tinycloud-node
-    path: tinycloud-core/src/db.rs
+    path: tinycloud-core/src/db.rs@05c6a93
 tags: [nodes, hosts]
-timestamp: 2026-06-23
+timestamp: 2026-10-05
 ---
 
 # Hosts & Host Delegations
@@ -23,7 +23,7 @@ Host delegations are the placement layer of [[architecture-layers|Layer 1]]: the
 
 ## Mechanics
 
-The signing client builds a host delegation via host-SIWE (`tinycloud-sdk-wasm/src/host.rs`); when the [[nodes|node]] transacts it, the [[space-hosting|lazy-host path]] in `tinycloud-core/src/db.rs` records the `SpaceId` (see [[space-hosting]] for the exact match rule). The node also runs a **manifest service** so apps can resolve which host serves a space, and uses **libp2p only for its ed25519 node identity** — not for block exchange (there is no active P2P data sync today; see [[replication]]).
+The signing client builds a host delegation via host-SIWE (`tinycloud-sdk-wasm/src/host.rs`); when the [[nodes|node]] transacts it, the [[space-hosting|lazy-host path]] in `tinycloud-core/src/db.rs` records the `SpaceId` (see [[space-hosting]] for the exact match rule). The node also runs a **manifest service** so apps can resolve which host serves a space, and uses **libp2p only for its ed25519 node identity** — not for block exchange (the node has no P2P data sync; see [[replication]]).
 
 ## Relationships
 
@@ -31,7 +31,7 @@ Binds an [[autonomic-space|space]] to a [[nodes|node]]; carried as a [[capabilit
 
 ## Status & drift
 
-Shipped. Multi-node replication of a hosted space's data is **planned** (the [[replication]] module is unmounted); today a space is effectively served by its host node.
+Shipped. Multi-node [[replication]] of a hosted space's data is **planned**; no replication code is in production Node 1.17.3 or on `main`. Today a space is served by its host node; local read replicas on client devices are in progress.
 
 ## Sources
-- `tinycloud-node`: `tinycloud-sdk-wasm/src/host.rs`, `tinycloud-core/src/db.rs`
+- `tinycloud-node` @05c6a93 (Node 1.17.3): `tinycloud-sdk-wasm/src/host.rs`, `tinycloud-core/src/db.rs`

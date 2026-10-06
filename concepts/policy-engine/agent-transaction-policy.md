@@ -1,62 +1,66 @@
 ---
 type: concept
 title: Agent Transaction Policy
-description: The generalization of the policy engine to agent-driven requests — an enrolled agent (holder) acts for an eligible subject, its binding verified before any grant, via the HolderEnrollment / HolderBindingProof machinery.
-status: in-progress
+description: The planned generalization of the policy engine to agents acting for a user — a signed, revocable enrollment binding an agent holder to an eligible subject. Not in production; the shipped agent hand-off is received-share re-delegation.
+status: planned
 layer: protocol
 sources:
-  - repo: policy-engine
-    path: src/enrollment.rs
-  - repo: policy-engine
-    path: src/types.rs
-  - repo: policy-engine
-    path: crates/policy-runtime/src/lib.rs
+  - repo: tinycloud-node
+    path: tinycloud-node-server/src/policy_v3.rs@05c6a93
+  - repo: tinycloud-node
+    path: test/m1-realdata-e2e/Cargo.toml@05c6a93
+  - repo: js-sdk
+    path: packages/web-sdk/src/share/types.ts@d43e51ea
 tags: [policy-engine, agents]
-timestamp: 2026-06-23
+timestamp: 2026-10-05
 ---
 
 # Agent Transaction Policy
 
-**Agent transaction policy** is the policy engine's answer to *"who is actually holding this grant?"* when the requester is an **agent acting on behalf of a user** rather than the user's own key. The engine separates two principals — the **eligible subject** (the DID the [[overview|Policy]]'s `when` is written about, typically the user) and the **holder** (the agent DID that will receive and exercise the grant) — and admits a request only when a signed **`HolderEnrollment`** proves the subject authorized that holder. This is the [[policy-engine/overview|policy engine]] generalized from "grant to a key" to "grant to an enrolled agent transacting for a subject."
+**Agent transaction policy** is the planned answer to "who actually holds this grant?" when the requester is an **agent acting for a user** rather than the user's own key. It separates two principals: the **eligible subject** (the user the policy's condition is about) and the **holder** (the agent key that receives and exercises the grant). A signed, revocable enrollment from the subject would link the two. It extends the [[policy-engine/overview|policy engine]] from "grant to the key that proved the credential" to "grant to an agent enrolled by that person".
 
 ## Role
 
-A [[capabilities|capability]] is bearer authority: whoever holds the chain wields it. For autonomous agents that is too blunt — the owner's Policy may say "anyone with credential Y," but the *agent* presenting the credential is not the subject the credential is about. Agent transaction policy closes that gap inside [[architecture-layers|Layer 1]]: the `when` rule still ranges over the **subject**, but the **grant is bound to the holder**, and a revocable enrollment links the two. Revoke the enrollment and the agent stops qualifying — without touching the subject's identity or the Policy.
+In production, a [[credential-gated-delegation|credential-gated]] session goes to the key that proved the credential: the v4 presentation requires `holderDid == subjectDid`. An agent therefore cannot prove a credential *about its user* and receive the grant itself. Agent transaction policy would let the subject enroll the agent once, and revoke that enrollment without touching the subject's identity or the owner's policy.
 
 ## Mechanics
 
-The binding is one variant of `HolderBindingProof` (`src/types.rs:348`), `EnrolledAgent { enrollment, status? }`, carried inside every `GrantPresentation`. During `resolve` the runtime calls `validate_enrolled_agent_binding` (`src/enrollment.rs:108`) *after* presentation validation and *before* evidence verification. It enforces, in order:
+### What ships instead: received-share re-delegation
 
-1. **Identity match** (`validate_enrollment_identity`) — the enrollment's `eligible_subject_did` and `holder_did` must equal the presentation's; otherwise `enrollment-binding-mismatch`.
-2. **Time validity** (`validate_enrollment_time`) — `now ≥ not_before` and, if set, `now ≤ expires_at`; else `enrollment-not-yet-valid` / `enrollment-expired`.
-3. **Scope** (`check_enrollment_scope`) — if the enrollment carries a `scope`, the request's `policy_id` and the Policy's `resource_id` must be in the allowed lists; else `enrollment-out-of-scope`.
-4. **Status / revocation** (`validate_enrollment_status` against an `EnrollmentStatusTracker`) — enrollment statuses are **monotonic and revocation is irreversible**: a `HolderEnrollmentStatus` with a non-increasing `sequence` is `enrollment-status-rollback`; once the tracker has observed a `Revoked` status, a later `Active` status is rejected `enrollment-revoked-irreversible`; and a presentation that omits the status after the engine has seen a revocation is rejected `enrollment-revoked` (omission must not silently re-admit).
+The agent hand-off that ships today needs no enrollment object. The person who proved the credential receives a policy session, then delegates it onward:
 
-Only after this binding holds does the engine verify [[credential-gated-delegation|evidence]], re-evaluate `when` over the **subject**, and issue the `portable-delegation` to the **holder**.
+1. The recipient opens an addressed share and proves their email credential (see [[native-sharing]]).
+2. `ReceivedShare.delegate({ to, expiresAt? })` re-delegates that access, including decryption, to another key, such as an agent's or account [[session-keys|session key]]. `expiresAt` defaults to the longest the parent allows.
+3. The [[nodes|Node]] admits each descendant against its immediate parent: same policy facts, one less remaining depth (at most 8 hops), a strictly narrower time window, and contained capabilities (see [[policy-v3-admission]]).
+4. Revoking either policy root, or any delegation in the chain, stops the agent on its next invocation ([[revocation]]).
 
-## Shape
+This gives an agent scoped, revocable, credential-rooted access. Its limit is that the subject must first prove the credential with their own key; there is no standing "this agent may act for me" object.
 
-```
-HolderEnrollment (xyz.tinycloud.policy/holder-enrollment/v0):
-  { enrollment_id, eligible_subject_did, holder_did, scope?, not_before, expires_at?, signing_key_did, signature }
-HolderEnrollmentScope:    { policy_ids?: [String], resource_ids?: [String] }
-HolderEnrollmentStatus:   { status_id, enrollment_id, sequence, disposition: active|revoked, effective_at, … }
-HolderBindingProof:       EnrolledAgent { enrollment, status? }   // tagged "type": "enrolled-agent"
-```
+### Planned: holder enrollment
 
-The enrollment is itself a signed object under the [[overview#shape|Signed Object Profile]]; the subject signs it to delegate "this agent may act for me," and a separate signed `HolderEnrollmentStatus` chain (anti-rollback by `sequence`) revokes it.
+The design keeps a signed `HolderEnrollment { eligible_subject_did, holder_did, scope?, not_before, expires_at? }`, checked before evidence is verified:
+
+- the subject and holder must match the presentation;
+- the enrollment must be within its validity window;
+- the request must fall within the enrollment's scope;
+- a monotonic status chain must not show it revoked (once revoked, never re-admitted).
 
 ## Relationships
 
-Generalizes the [[policy-engine/overview|policy engine]] to agent holders; the subject side feeds [[policy-as-central-primitive|`when`'s `subject{}`]] condition; runs alongside [[credential-gated-delegation|credential evidence]] verification; the grant it produces is a holder-bound [[capabilities|portable-delegation]]; depends on the agent's [[dids|DID]] and the subject's [[dids|DID]]; sits in [[architecture-layers|Layer 1]].
+A planned extension of the [[policy-engine/overview|policy engine]] and [[policy-v3-admission]]; would relax the holder rule in [[credential-gated-delegation]]; today's substitute is re-delegation of a [[native-sharing|received share]] under [[attenuation]] and [[revocation]]; agents get keys via [[device-authorization]] and [[session-keys]]; subjects and holders are [[dids|DIDs]]; [[architecture-layers|Layer 1]].
 
 ## Example
 
-A user (`did:key:z6Mk…subject`) enrolls their assistant agent (`did:key:z6Mk…holder`) with a `HolderEnrollment` scoped to `pol_email_domain`. The agent later presents that enrollment plus an [[sd-jwt-vc|email-domain credential]] *about the subject*. The engine verifies the enrollment binds subject→holder, confirms the credential, and issues a one-hour transcript-read grant **to the agent**. If the user revokes the enrollment (a `Revoked` status), the next presentation is rejected `enrollment-revoked` even if the credential is still valid — the agent's authority to transact for the subject is gone. (This binding flow is exercised in the runtime's `challenge_resolve_native_read_then_active_cutoff_denies` test.)
+Shipped path: Bob receives Alice's domain share, proves `bob@example.com`, and calls `delegate({ to: agentDid })`. His agent can read the document until Bob's session expires, and loses access on its next request if Alice revokes. Planned path: Bob would instead sign an enrollment naming his agent, and the agent would present Bob's credential plus that enrollment directly.
 
 ## Status & drift
 
-`in-progress`. The enrollment model — `HolderEnrollment`, `HolderEnrollmentStatus`, scope and anti-rollback rules — is **frozen v0** (`spec/holder-enrollment.md`) and implemented + tested in `policy-core` (`enrollment.rs`) and exercised by `policy-runtime`. The single `HolderBindingProof` variant today is `EnrolledAgent`; the broader "agent transaction policy" framing (richer binding kinds, full operational-key role enforcement) is design-intent — the `OperationalKeyRole` types exist but full role-chain enforcement is not complete in core verification. **Repo status:** the cited `policy-engine` repo is not public under TinyCloudLabs, and this design has been superseded by Data Exchange v0 (the `sssoforth/information-sphere` lineage); treat this page as historical context, not the current build target. See [[meta/contradictions]].
+`planned`. Node 1.17.3 has no enrollment object or holder/subject split; the v4 holder proof requires holder and subject to be the same `did:key`. The agent-transfer use case shipped differently, as received-share re-delegation (SDK 3.0.0 `ReceivedShare.delegate`, Node 1.17.3 multi-hop policy sessions, TC-529).
+
+### History: policy-core v0 enrollment
+
+The `policy-core` v0 engine implemented this design: `HolderEnrollment` (`xyz.tinycloud.policy/holder-enrollment/v0`), `HolderEnrollmentStatus` with anti-rollback `sequence`, and a `HolderBindingProof::EnrolledAgent` variant checked by `validate_enrolled_agent_binding`. It was tested in that standalone workspace but never wired into the Node server. In Node 1.17.3 it is used only by test crates (such as `test/m1-realdata-e2e`), never by the server.
 
 ## Sources
-- `policy-engine`: `src/enrollment.rs:108` (`validate_enrolled_agent_binding` + sub-checks, anti-rollback), `src/types.rs:271,348` (`HolderEnrollment`, `HolderBindingProof`), `crates/policy-runtime/src/lib.rs` (binding called in `resolve`)
+- `tinycloud-node` (`05c6a93`, Node 1.17.3): `tinycloud-node-server/src/policy_v3.rs` (descendant admission :295-310; chain walk :553-660), `CHANGELOG.md` (1.17.3, TC-529), `test/m1-realdata-e2e/Cargo.toml:12-15`
+- `js-sdk` (`d43e51ea`, SDK 3.0.0): `packages/web-sdk/src/share/types.ts:49-55, 95-108` (`ReceivedShare.delegate`, `ShareDelegateOptions`), `packages/sdk-core/src/policy/credential-admission.ts:360-376` (v4 `holderDid == subjectDid`)

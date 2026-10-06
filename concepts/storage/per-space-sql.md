@@ -6,17 +6,17 @@ status: shipped
 layer: protocol
 sources:
   - repo: tinycloud-node
-    path: tinycloud-core/src/sql/service.rs
+    path: tinycloud-core/src/sql/service.rs@05c6a93
   - repo: tinycloud-node
-    path: tinycloud-core/src/sql/database.rs
+    path: tinycloud-core/src/sql/database.rs@05c6a93
   - repo: tinycloud-node
-    path: tinycloud-core/src/sql/authorizer.rs
+    path: tinycloud-core/src/sql/authorizer.rs@05c6a93
   - repo: tinycloud-node
-    path: tinycloud-core/src/sql/storage.rs
+    path: tinycloud-core/src/sql/storage.rs@05c6a93
   - repo: tinycloud-node
-    path: tinycloud-node-server/src/routes/mod.rs
+    path: tinycloud-node-server/src/routes/mod.rs@05c6a93
 tags: [storage, sql, sqlite, duckdb]
-timestamp: 2026-06-23
+timestamp: 2026-10-05
 ---
 
 # Per-Space SQL
@@ -31,11 +31,11 @@ Per-space SQL is a [[architecture-layers|Layer 1]] [[services|service]] alongsid
 
 ### One database per (space, db_name)
 
-`SqlService` (`sql/service.rs`) holds a `DashMap<(String, String), DatabaseHandle>` keyed by `(space.to_string(), db_name)` — so a space can have multiple named SQL databases. The `db_name` is the **last path segment** of the resource (`SqlService::db_name_from_path`: `path.split('/').next_back()`, defaulting to `"default"`). Each handle is an actor task (`spawn_actor`, `sql/database.rs`) owning a `rusqlite::Connection`; the server route resolves the cap scope and forwards a `SqlRequest` to the right handle (`routes/mod.rs:1043-1093`, dispatched when `r.service() == "sql" && ability.starts_with("tinycloud.sql/")`, `routes/mod.rs:644`).
+`SqlService` (`sql/service.rs`) holds a `DashMap<(String, String), DatabaseHandle>` keyed by `(space.to_string(), db_name)` — so a space can have multiple named SQL databases. The `db_name` is the **last path segment** of the resource (`SqlService::db_name_from_path`: `path.split('/').next_back()`, defaulting to `"default"`). Each handle is an actor task (`spawn_actor`, `sql/database.rs`) owning a `rusqlite::Connection`; the server route resolves the cap scope and forwards a `SqlRequest` to the right handle (`handle_sql_invoke`, `routes/mod.rs:2104`, dispatched when `r.service() == "sql" && ability.starts_with("tinycloud.sql/")`, `routes/mod.rs:1439`).
 
 ### In-memory, promoted to file
 
-A database **starts in memory** (`StorageMode::InMemory`, `sql/storage.rs`) and is **promoted to a file** the moment its size crosses the **memory threshold** — default **10 MiB** (`default_sql_memory_threshold = ByteUnit::Mebibyte(10)`, `config.rs:222`). On each operation the actor checks `current_size` (`page_count * page_size`) and, past the threshold, calls `promote_to_file`, switching `mode` to `StorageMode::File({base_path}/{space}/{db_name}.db)` (`database.rs:114-122`). If the file already exists at spawn, it opens directly from disk. The base path defaults to `{datadir}/sql`. Writes are durably captured as an exported **database artifact** persisted through the [[metadata-db|artifact repository]] after any statement that touched a write target, so the authoritative copy survives actor death and is restored on respawn.
+A database **starts in memory** (`StorageMode::InMemory`, `sql/storage.rs`) and is **promoted to a file** the moment its size crosses the **memory threshold** — default **10 MiB** (`default_sql_memory_threshold = ByteUnit::Mebibyte(10)`, `config.rs:1012`). On each operation the actor checks `current_size` (`page_count * page_size`) and, past the threshold, calls `promote_to_file`, switching `mode` to `StorageMode::File({base_path}/{space}/{db_name}.db)` (`database.rs:190`). If the file already exists at spawn, it opens directly from disk. The base path defaults to `{datadir}/sql`. Writes are durably captured as an exported **database artifact** persisted through the [[metadata-db|artifact repository]] after any statement that touched a write target, so the authoritative copy survives actor death and is restored on respawn.
 
 ### In-engine authorization
 
@@ -46,7 +46,11 @@ The security boundary is `create_authorizer(caveats, ability, is_admin)` (`sql/a
 - **Reads** (`AuthAction::Read`) are gated by the [[attenuation|caveats']] table/column allow-lists (`SqlCaveats::is_table_allowed` / `is_column_allowed`).
 - **Writes** (`Insert`/`Delete`/`Update`) are **denied outright** for the read-only abilities `tinycloud.sql/read` and `tinycloud.sql/select`, and otherwise gated by `is_write_allowed` + the table allow-list (`sql/caveats.rs`).
 
-So the ability (`tinycloud.sql/read|select|write|admin|*`) sets the coarse mode and the `SqlCaveats` narrow it to specific tables/columns — the SQL analog of the [[uri-addressing-grammar|path-prefix]] attenuation used for KV.
+So the ability (`tinycloud.sql/read`, `select`, `write`, `admin`, `schema`, or `*`) sets the coarse mode and the `SqlCaveats` narrow it to specific tables/columns — the SQL analog of the [[uri-addressing-grammar|path-prefix]] attenuation used for KV.
+
+### Storage quota
+
+SQL artifact bytes count toward the space's storage [[quota]] (usage = block bytes + SQL/DuckDB artifact bytes). Write-class requests are refused with **402** when the space is at or over its limit; read-only requests are never refused (`routes/mod.rs:2197-2216`). Deleting rows does not currently reduce usage.
 
 ## Shape
 
@@ -54,7 +58,7 @@ A SQL invocation carries a `tinycloud.sql/{action}` ability over resource `…:{
 
 ## Relationships
 
-A `tinycloud.sql/*` [[capabilities|ability]] over a `/sql/{db}` resource named per [[uri-addressing-grammar]]; authorized by the same [[delegation]]/[[invocation]] chain as KV, then further narrowed in-engine by [[attenuation|SqlCaveats]]; its durable artifacts and pointers are stored in the [[metadata-db]] (the live `.db` files are separate on-disk state, like the [[blob-store]]); per-[[autonomic-space|space]] isolation mirrors how the [[blob-store]] namespaces content by `SpaceId`. DuckDB is a parallel [[services|service]] (`tinycloud.duckdb/*`).
+A `tinycloud.sql/*` [[capabilities|ability]] over a `/sql/{db}` resource named per [[uri-addressing-grammar]]; authorized by the same [[delegation]]/[[invocation]] chain as KV, then further narrowed in-engine by [[attenuation|SqlCaveats]]; its durable artifacts and pointers are stored in the [[metadata-db]] (the live `.db` files are separate on-disk state, like the [[blob-store]]); per-[[autonomic-space|space]] isolation mirrors how the [[blob-store]] namespaces content by `SpaceId`. DuckDB is a parallel [[services|service]] (`tinycloud.duckdb/*`). Writes are bounded by the space [[quota]]; the service-level view is [[sql]].
 
 ## Example
 
@@ -62,7 +66,7 @@ An owner delegates `tinycloud.sql/select` over `…:default/sql/notes` with a ca
 
 ## Status & drift
 
-Shipped. The optional **DuckDB** service (`tinycloud-core/src/duckdb/`, feature `duckdb`) is a structurally parallel per-space service with its own caveats/authorizer/parser and Arrow-IPC export — but it is a **separate database**, not DuckDB attached to the SQLite file: the KV↔DuckDB bridge is explicitly **"not yet available"** (`duckdb/database.rs:309`). Spec note: `specs/duckdb-service.md` is in-tree. See [[meta/contradictions]].
+Shipped in Node 1.17.3, including the quota gate. The optional **DuckDB** service (`tinycloud-core/src/duckdb/`, feature `duckdb`) is a structurally parallel per-space service with its own caveats/authorizer/parser and Arrow-IPC export — but it is a **separate database**, not DuckDB attached to the SQLite file: the KV↔DuckDB bridge is explicitly **"not yet available"** (`duckdb/database.rs:356`). DuckDB is compiled only with the `duckdb` cargo feature and is not enabled on the hosted node (see [[duckdb]]). Spec note: `specs/duckdb-service.md` is in-tree. See [[meta/contradictions]].
 
 ## Sources
-- `tinycloud-node`: `tinycloud-core/src/sql/service.rs` (`SqlService`, `db_name_from_path`, artifact persistence), `tinycloud-core/src/sql/database.rs` (`spawn_actor`, 10 MiB promote, `handle_export`), `tinycloud-core/src/sql/storage.rs` (`StorageMode`, `current_size`, `promote_to_file`), `tinycloud-core/src/sql/authorizer.rs` (`create_authorizer`: deny ATTACH/DETACH, ability+caveat gating), `tinycloud-node-server/src/config.rs:218-231` (10 MiB default threshold), `tinycloud-node-server/src/routes/mod.rs:644,1043-1093` (dispatch)
+- `tinycloud-node` @05c6a93 (Node 1.17.3): `tinycloud-core/src/sql/service.rs` (`SqlService`, `db_name_from_path`, artifact persistence), `tinycloud-core/src/sql/database.rs:125,190,247` (`spawn_actor`, promote, `handle_export`), `tinycloud-core/src/sql/storage.rs` (`StorageMode`, `current_size`, `promote_to_file`), `tinycloud-core/src/sql/authorizer.rs` (`create_authorizer`: deny ATTACH/DETACH, ability+caveat gating), `tinycloud-node-server/src/config.rs:1008-1020` (10 MiB default threshold), `tinycloud-node-server/src/routes/mod.rs:1439,2104` (dispatch), `:2197-2216` (quota gate)

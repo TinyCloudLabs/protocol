@@ -10,7 +10,7 @@ sources:
   - repo: tinycloud-node
 provenance_note: index of future-directions concepts; ground truth is SYNTHESIS "Future Directions" + the whitepaper README §6. No new mechanics asserted here.
 tags: [future, roadmap, index]
-timestamp: 2026-06-23
+timestamp: 2026-10-05
 ---
 
 # Roadmap
@@ -20,7 +20,7 @@ The **roadmap** is the index of TinyCloud protocol directions that are **named, 
 ## Members
 
 - **[[future/threshold-decryption|Threshold decryption]]** — delegatable ferveo / TACO threshold decryption that fills the reserved `KeyBackendKind::Threshold` slot. **Actively under development.** Live concept: [[encryption/threshold-decryption]].
-- **[[future/replication-and-discovery|Replication & peer discovery]]** — first-class P2P replication and Bitcoin/Ethereum-style peer discovery. The `replication/` module exists in code but is unmounted. **Actively under development.** Live concept: [[consistency/replication]].
+- **[[future/replication-and-discovery|Replication & peer discovery]]** — first-class P2P replication and Bitcoin/Ethereum-style peer discovery. No replication module ships on Node `main` or in production (a prototype lives on an unmerged branch). The active track is **local read replicas** built on the KV change feed (`tinycloud.kv/sync`, in progress). Live concept: [[consistency/replication]].
 - **[[future/compute|Compute]]** — the whitepaper's `tinycloud.compute` service (WASM / ZK-VM execution over space data). Named in the spec, no implementing code. Live concept: [[services/compute]].
 - **[[future/proxy-re-encryption-deprecated|Proxy re-encryption (deprecated)]]** — the LIT-Protocol-style proxy re-encryption approach that was **cut from v1** and replaced by [[encryption/threshold-decryption|threshold decryption]]. Documented as dropped.
 - **[[future/zk-vms|ZK VMs]]** — verifiable compute via zero-knowledge VMs (RISC Zero, SP1). Research-phase, speculative.
@@ -36,4 +36,4 @@ Everything on this roadmap is [[architecture-layers|Layer 1]] protocol work. It 
 
 ## Sources
 - `whitepaper`: `README.md` §6 (Future Directions)
-- `tinycloud-node`: reserved/unmounted scaffolds (`encryption_network/`, `replication/`)
+- `tinycloud-node`: `encryption_network/` (decrypt-only v1); KV change feed (`main`, unreleased)

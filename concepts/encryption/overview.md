@@ -6,11 +6,11 @@ status: in-progress
 layer: protocol
 sources:
   - repo: tinycloud-node
-    path: tinycloud-core/src/encryption.rs
+    path: tinycloud-core/src/encryption.rs@05c6a93
   - repo: tinycloud-node
-    path: tinycloud-core/src/encryption_network/mod.rs
+    path: tinycloud-core/src/encryption_network/mod.rs@05c6a93
 tags: [encryption, overview]
-timestamp: 2026-06-23
+timestamp: 2026-10-05
 ---
 
 # Encryption Overview
@@ -32,17 +32,17 @@ The two mechanisms, at a glance:
 | Algorithm | AES-256-GCM | `x25519-aes256gcm/v1` envelope (ECIES-style wrap + AES-256-GCM) |
 | Who encrypts | the **node** | the **client**, locally |
 | Key custody | node-derived static key | network X25519 keypair (private key sealed at rest) |
-| Bound to | the node instance | the **owner [[dids|DID]]** (user-bound) |
+| Bound to | the node instance | the **owner DID** (user-bound; see [[dids]]) |
 | Node sees plaintext? | yes (it owns the data) | **never** — only unwraps/rewraps a symmetric key |
-| Access control | none (internal) | [[capabilities|capability]]-gated [[user-bound-decrypt|decrypt invocation]] |
+| Access control | none (internal) | capability-gated decrypt invocation ([[user-bound-decrypt]]) |
 
-The two are not unrelated in code: the X25519 ECIES wrap reuses `ColumnEncryption` (the at-rest AES-256-GCM type) as its AEAD over the Diffie-Hellman shared secret, and the network's private key is *sealed* at rest with a `ColumnEncryption` derived from `b"tinycloud/encryption/network-seal"` (`tinycloud-node-server/src/lib.rs:219-221`). So at-rest encryption is the building block that protects the network mechanism's own secrets.
+The two are not unrelated in code: the X25519 ECIES wrap reuses `ColumnEncryption` (the at-rest AES-256-GCM type) as its AEAD over the Diffie-Hellman shared secret, and the network's private key is *sealed* at rest with a `ColumnEncryption` derived from `b"tinycloud/encryption/network-seal"` (`tinycloud-node-server/src/lib.rs:415-416`). So at-rest encryption is the building block that protects the network mechanism's own secrets.
 
 ## Members
 
 - **[[at-rest|At-rest column encryption]]** — `ColumnEncryption` (AES-256-GCM, `0x01||nonce||ct` format, legacy-plaintext passthrough). The node's internal at-rest protection.
 - **[[encryption-networks|Encryption networks]]** — the X25519 envelope protocol: `NetworkId`, the `LocalOneOfOneBackend` key custody, and client-side local encryption.
-- **[[user-bound-decrypt|User-bound decryption]]** — how a holder actually decrypts: a capability-gated native [[invocation]] against `node + networkId`, with the node unwrapping/rewrapping under strict hash/nonce/TTL binding.
+- **[[user-bound-decrypt|User-bound decryption]]** — how a holder actually decrypts: a capability-gated native [[invocation]] against `node + networkId`, with the node unwrapping/rewrapping to the caller's receiver key under strict hash/nonce/TTL binding. Decrypt grants must name the raw network URN as a top-level resource.
 - **[[future/threshold-decryption|Threshold decryption]]** *(planned)* — the reserved `KeyBackendKind::Threshold` slot for future ferveo-style threshold custody. Actively under development; see [[threshold-decryption]].
 
 ## Relationships
@@ -54,4 +54,4 @@ Implements the [[encryption-service]] surface; at-rest seals the [[encryption-ne
 At-rest is **shipped**. Encryption networks are **wired and mounted but in active development** — the `LocalOneOfOne` backend ships; `Threshold` and `Dstack` backends are reserved/partial. Revoke is a placeholder (state flip only). Code is canonical throughout.
 
 ## Sources
-- `tinycloud-node`: `tinycloud-core/src/encryption.rs`, `tinycloud-core/src/encryption_network/mod.rs`, `tinycloud-node-server/src/lib.rs:219-227` (service wiring + seal derivation)
+- `tinycloud-node`: `tinycloud-core/src/encryption.rs`, `tinycloud-core/src/encryption_network/mod.rs`, `tinycloud-node-server/src/lib.rs:411-422` (service wiring + seal derivation) — @05c6a93 (Node 1.17.3)

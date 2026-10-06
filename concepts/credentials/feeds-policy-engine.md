@@ -1,42 +1,47 @@
 ---
 type: concept
 title: Credentials Feed the Policy Engine
-description: The connective concept — an OpenCredentials credential, presented at request time, becomes verified evidence{} that satisfies a policy condition, letting the policy engine mint a grant.
-status: in-progress
+description: The connective concept — an OpenCredentials vc+sd-jwt credential, verified once by the Node at mint time, satisfies a policy's credential requirement and yields an ordinary policy session delegation.
+status: shipped
 layer: tinycloud-app
 sources:
-  - repo: policy-engine
-    path: crates/policy-evidence-vc/src/lib.rs
-  - repo: policy-engine
-    path: crates/policy-runtime/src/lib.rs
+  - repo: tinycloud-node
+    path: tinycloud-node-server/src/policy_v3.rs@05c6a93
+  - repo: OpenCredentials
+    path: rust/opencredentials_witness/src/credentials/mod.rs@60364a9
+  - repo: js-sdk
+    path: packages/sdk-core/src/policy/credential-admission.ts@d43e51ea
 tags: [credentials, policy-engine]
-timestamp: 2026-06-23
+timestamp: 2026-10-05
 ---
 
 # Credentials Feed the Policy Engine
 
-This is the join between the two halves of the stack: an **[[credentials|OpenCredentials]] credential** (a [[sd-jwt-vc|SD-JWT VC]] from the [[witness-service|witness]]) presented at request time becomes **verified `evidence`** that satisfies a [[policy-as-central-primitive|Policy]]'s `when` condition, letting the [[policy-engine/overview|policy engine]] mint a [[capabilities|capability]] grant. "Credentials feed the policy engine" is literal: a Layer-2 credential is the input that unlocks Layer-1 authority.
+This is where the two halves of the stack join. A credential from **[[opencredentials|OpenCredentials]]**, an [[sd-jwt-vc|SD-JWT VC]] issued by the [[witness-service|witness]], satisfies a policy's `credentialRequirement`. The [[nodes|Node]] then mints a [[delegation]] to the holder. "Credentials feed the policy engine" is literal: a Layer 2 credential unlocks Layer 1 authority.
 
 ## Role
 
-It is what makes [[policy-as-central-primitive|policy as a primitive]] powerful — authority conditioned not on *which key* but on *what the holder can prove*. The [[credentials|credential]] app ([[architecture-layers#layer-2--tinycloud-apps|Layer 2]]) issues facts; the [[policy-engine/overview|policy engine]] ([[architecture-layers#layer-1--protocol|Layer 1]]) consumes them as gates. This concept names that pipeline so both sides link to one place.
+This pipeline is what makes [[policy-as-central-primitive|a policy]] more than a grant to a known key. Authority depends on what the holder can prove, not on which key they hold. The credential app ([[architecture-layers#layer-2--tinycloud-apps|Layer 2]]) issues facts; the [[policy-engine/overview|policy engine]] ([[architecture-layers#layer-1--protocol|Layer 1]]) consumes them as gates. This page names that pipeline so both sides link to one place.
 
 ## Mechanics
 
-1. A [[witness-service|witness]] issues the holder an [[sd-jwt-vc|SD-JWT credential]] (e.g. `opencredentials.email/v1`).
-2. A [[policy-as-central-primitive|Policy]]'s `when` includes `evidence{ verifier, requirements, authority }`.
-3. At request time the holder attaches the credential to a `GrantPresentation`; the engine's **VC evidence verifier** (`crates/policy-evidence-vc/src/lib.rs`) independently verifies signature, issuer, subject, selective-disclosure, and freshness — the holder cannot self-assert satisfaction.
-4. The satisfied requirement lets `when` pass and the runtime mints a [[capabilities|portable-delegation]], capped at the credential's `valid_until`.
+1. The owner registers a Policy v2 whose `credentialRequirement` names a profile (`tinycloud.email-proof/v1` or `tinycloud.email-domain-proof/v1`), the issuer `did:web:issuer.credentials.org`, and the expected claims.
+2. The recipient's browser uses a `did:key`. It acquires a credential bound to that DID from the [[witness-service|witness]] with an 8-digit mailbox code, and takes a 300-second Node challenge.
+3. The recipient posts the `vc+sd-jwt` envelope and a signed `PolicyCredentialPresentation` (v3 or v4) to `POST /policy/v3/delegations`.
+4. The Node verifies everything itself: the issuer signature against its pinned key, the disclosures, the holder binding, 300 s freshness, the challenge, and the claims. It then mints a session UCAN with both policy roots as parents.
+5. From then on the credential is out of the loop. The session, and anything re-delegated from it, is checked on each [[invocation]] against the policy roots and [[revocation]].
 
-The detailed verifier behavior is [[credential-gated-delegation]]; this concept is the connective overview.
+The detailed checks are in [[credential-gated-delegation]]; the session machinery is in [[policy-v3-admission]].
 
 ## Relationships
 
-Connects [[credentials|OpenCredentials]] / [[sd-jwt-vc]] / [[witness-service]] (L2) to the [[policy-engine/overview|policy engine]] / [[credential-gated-delegation]] (L1); produces a [[capabilities|capability]] grant; uses nonce-bound presentations ([[policy-engine/overview]]).
+Connects [[opencredentials|OpenCredentials]], [[sd-jwt-vc]] and [[witness-service]] (L2) to the [[policy-engine/overview|policy engine]], [[credential-gated-delegation]] and [[policy-v3-admission]] (L1); produces a [[delegation]]; the main product use is email and domain [[native-sharing|Share links]].
 
 ## Status & drift
 
-`in-progress`. The pipeline is implemented and tested in `policy-evidence-vc` + `policy-runtime` for the email-domain credential; broader credential types are design-intent. As with the whole engine, the minted grant is honored by [[nodes|the node]] only once node consumption of the policy engine lands. **Repo status:** the cited `policy-engine` repo is not public under TinyCloudLabs, and this design has been superseded by Data Exchange v0 (the `sssoforth/information-sphere` lineage); treat this page as historical context, not the current build target.
+`shipped` in Node 1.17.3 for the two mailbox profiles: exact email since Node 1.16.0 (accountless v4 since 1.15.0) and email domain since 1.17.3. Other credential types are not accepted.
 
 ## Sources
-- `policy-engine`: `crates/policy-evidence-vc/src/lib.rs`, `crates/policy-runtime/src/lib.rs`
+- `tinycloud-node` (`05c6a93`, Node 1.17.3): `tinycloud-node-server/src/policy_v3.rs` (mint :2021; requirement :4185; freshness pin :5847-5855; SD-JWT verification :5866-5960)
+- `OpenCredentials` (`60364a9`): `rust/opencredentials_witness/src/credentials/mod.rs` (profiles :38, 42; 8-digit code :64)
+- `js-sdk` (`d43e51ea`, SDK 3.0.0): `packages/sdk-core/src/policy/credential-admission.ts:360-376`

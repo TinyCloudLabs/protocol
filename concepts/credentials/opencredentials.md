@@ -1,54 +1,65 @@
 ---
 type: concept
 title: OpenCredentials
-description: TinyCloud's verifiable-credentials app — a witness service that issues SD-JWT / W3C VCs plus a client SDK, producing the credentials the policy engine gates delegations on.
-status: in-progress
+description: TinyCloud's verifiable-credentials system — an issuer identity at did:web:issuer.credentials.org and a TEE witness at witness.credentials.org that issue holder-bound vc+sd-jwt mailbox credentials the Node checks before minting a policy session.
+status: shipped
 layer: tinycloud-app
 sources:
   - repo: OpenCredentials
-    path: rust/opencredentials_witness/src/main.rs
+    path: README.md@60364a9
   - repo: OpenCredentials
-    path: js/opencredentials-client/src/opencredentials_client_wrapper.ts
+    path: rust/opencredentials_witness/src/credentials/mod.rs@60364a9
   - repo: OpenCredentials
-    path: opencredentials-protocol.md
+    path: rust/opencredentials_witness/src/main.rs@60364a9
+  - repo: tinycloud-node
+    path: deploy/share-email/production-trust-bundle-contract.md@05c6a93
 tags: [credentials, layer, opencredentials]
-timestamp: 2026-06-23
+timestamp: 2026-10-05
 ---
 
 # OpenCredentials
 
-**OpenCredentials** is TinyCloud's verifiable-credentials system: a **[[witness-service|witness service]]** that verifies a real-world fact (email control, DNS, GitHub, NFT ownership, …) and issues a signed credential, plus a **client SDK** that drives the witness flow and parses the result. The credentials it issues are [[sd-jwt-vc|SD-JWT / W3C Verifiable Credentials]] signed by a stable issuer DID, and they are exactly the evidence the [[policy-engine/overview|policy engine]] verifies to [[credential-gated-delegation|gate a delegation]].
+**OpenCredentials** is TinyCloud's verifiable-credentials system. A **[[witness-service|witness]]** checks a real-world fact, such as control of a mailbox, and issues a signed credential. A separate **issuer identity** publishes the public key that credential verifies against. The credentials are [[sd-jwt-vc|`vc+sd-jwt`]] credentials, bound to the holder's `did:key`. They are the evidence the [[nodes|Node]] checks in [[credential-gated-delegation]].
 
 ## Role
 
-OpenCredentials is an [[architecture-layers#layer-2--tinycloud-apps|Layer 2 TinyCloud app]] — a first-class data source built by TinyCloud — whose "data" is **portable proofs of attributes**. It is the source side of the [[feeds-policy-engine|"credentials feed the policy engine"]] pipeline: where [[capabilities|capabilities]] answer *"may this key do X?"*, credentials answer *"is this subject a member / does it control this email?"* — facts an owner's [[policy-as-central-primitive|Policy]] can condition authority on. Because the credentials are W3C-standard and selectively disclosable, they verify the same way regardless of which app presents them.
+OpenCredentials is an [[architecture-layers#layer-2--tinycloud-apps|Layer 2]] app whose output is **portable proofs of attributes**. It is the source side of [[feeds-policy-engine|"credentials feed the policy engine"]]. [[capabilities|Capabilities]] answer "may this key do X?"; credentials answer "does this key's holder control `bob@example.com`?", a fact an owner's [[policy-as-central-primitive|policy]] can require.
 
 ## Mechanics
 
-OpenCredentials separates two roles, mirroring the classic issuer / holder / verifier triangle:
+OpenCredentials uses **two hosts** (README):
 
-- **Issuance (witness):** the [[witness-service|witness service]] runs a `WitnessFlow` (`rust/opencredentials_witness/`) — a set of verification flows (email, DNS, GitHub, Reddit, NFT/POAP, attestation, …) selected by environment config. A frontend resolves the issuer's `did.json` and `opencredentials.json` (the discovery document — `opencredentials-protocol.md`), runs the flow's `instructions → statement → witness` round trips, and receives a credential in `jwt`, `ld`, or `sd-jwt` form.
-- **Client:** the `opencredentials-client` SDK (WASM-backed TypeScript, `js/opencredentials-client/`) drives that flow against a default witness of `https://witness.credentials.org` and parses the returned credential ([[sd-jwt-vc|`parse_sd_jwt`/`present_sd_jwt`]]).
-- **Verification:** the credential is verified independently by whoever consumes it — for TinyCloud authorization, that consumer is the [[policy-engine/overview|policy engine]]'s [[credential-gated-delegation|VC evidence verifier]].
+- **Issuer identity: `issuer.credentials.org`.** A static site serving the DID document, so `did:web:issuer.credentials.org` resolves to the issuer's TEE-derived public key.
+- **Witness API: `witness.credentials.org`.** The Phala/dstack TEE service that runs proofs and signs credentials as that issuer DID. The two are separate because a `did:web` must resolve independently of the service that signs under it.
+
+A holder acquires a credential through the acquisition protocol `tinycloud.credentials/acquisition/v1`, described in [[witness-service]]:
+
+1. It creates a request bound to its `holderDid`.
+2. It proves the fact; for a mailbox, it enters an 8-digit code.
+3. It signs a holder signature with the requesting DID's key.
+4. It collects a `vc+sd-jwt` credential whose subject and holder are that DID.
+
+The Node pins the production issuer (DID, VCT, `kid`, key) through operator configuration and verifies credentials itself.
 
 ## Shape
 
-- **Issuer DID:** `did:web:issuer.tinycloud.xyz` (the witness signs as this; its `did.json` carries the Ed25519 verification key).
-- **Witness endpoint:** `https://witness.credentials.org` (`DEFAULT_WITNESS_URL` in the client).
-- **Credential formats:** `jwt`, `ld`, `sd-jwt` (`capabilities` map; default `jwt`), with [[sd-jwt-vc|SD-JWT]] the format the policy engine consumes.
-- **Discovery:** an `opencredentials.json` next to `did.json` lists supported credential types, requirements, and endpoints.
+- **Issuer DID:** `did:web:issuer.credentials.org`.
+- **Witness API:** `https://witness.credentials.org`; user interaction pages are on `https://credentials.org`.
+- **Credential type wired to TinyCloud authorization:** `opencredentials.email/v1`, under two profiles, `tinycloud.email-proof/v1` and `tinycloud.email-domain-proof/v1`.
+- **Format:** `vc+sd-jwt`, Ed25519 (`EdDSA`), status freshness 300 s.
 
 ## Relationships
 
-Issued by the [[witness-service|witness service]] (signing as `did:web:issuer.tinycloud.xyz`); its credentials are [[sd-jwt-vc|SD-JWT / W3C VCs]]; consumed as [[credential-gated-delegation|evidence]] by the [[policy-engine/overview|policy engine]]; the end-to-end flow into authorization is [[feeds-policy-engine]]; an [[architecture-layers#layer-2--tinycloud-apps|L2 app]] peer of [[example-listen|Listen]] and [[secrets|Secrets]]; subjects and issuers are named by [[dids|DIDs]].
+Issued by the [[witness-service|witness service]]; credentials are [[sd-jwt-vc|SD-JWT VCs]]; consumed by [[credential-gated-delegation]] inside [[policy-v3-admission]]; the end-to-end flow is [[feeds-policy-engine]]; the main product use is email and domain [[native-sharing|Share links]]; issuer and holders are [[dids|DIDs]]; the witness key lives in a [[tee-dstack|dstack TEE]]; an [[architecture-layers#layer-2--tinycloud-apps|L2 app]] peer of [[example-listen|Listen]] and [[secrets-space|Secrets]].
 
 ## Example
 
-A user runs the OpenCredentials client against `witness.credentials.org`, completes the email-verification flow for `sam@tinycloud.xyz`, and receives an `opencredentials.email/v1` SD-JWT signed by `did:web:issuer.tinycloud.xyz`. They later present *only the email-domain disclosure* of that credential to a TinyCloud node fronted by a [[policy-as-central-primitive|Policy]] requiring a `@tinycloud.xyz` member — and receive a scoped [[capabilities|capability]] grant, never having revealed the full address.
+Bob opens a share addressed to `example.com`. His browser starts an acquisition at `witness.credentials.org` for his `did:key`. He receives an 8-digit code at `bob@example.com`, enters it, and gets an `opencredentials.email/v1` credential under `tinycloud.email-domain-proof/v1`. The credential is signed as `did:web:issuer.credentials.org`, and the issuer derives the domain from the proven mailbox. The Node verifies it against its pinned key and mints Bob's session.
 
 ## Status & drift
 
-`in-progress`. The witness service (axum + DStack TEE issuer derivation), the client SDK, the SD-JWT pipeline, and the email credential consumed by the policy engine are real and wired. The OpenCredentials *protocol* discovery document (`opencredentials-protocol.md`) is a broad spec covering many credential types and issuers; the **TinyCloud authorization path currently uses one credential type end-to-end** (email-domain — see [[credential-gated-delegation#status--drift]]). There is **no dedicated `credentials` system space** in the node; credentials live as ordinary portable artifacts (open design question — see [[meta/contradictions]]).
+`shipped`. The two mailbox profiles back production email and email-domain shares (Node 1.17.3). The witness also has other flows, such as X (`tinycloud.x-verification/v2`), DNS and GitHub, and legacy JWT/LD issuance routes; none of these is accepted by the Node's policy admission. Earlier versions of this page named the issuer `did:web:issuer.tinycloud.xyz`; the production issuer is `did:web:issuer.credentials.org`.
 
 ## Sources
-- `OpenCredentials`: `rust/opencredentials_witness/src/main.rs` + `config.rs` (witness flows, formats, `did:web` issuer), `js/opencredentials-client/src/opencredentials_client_wrapper.ts` (`DEFAULT_WITNESS_URL = https://witness.credentials.org`), `opencredentials-protocol.md` (discovery document)
+- `OpenCredentials` (`60364a9`): `README.md:16-25` (two-host architecture, issuer DID), `rust/opencredentials_witness/src/credentials/mod.rs` (protocol and profile constants :32-45, 8-digit mailbox code :64, issuance :1790-2040), `rust/opencredentials_witness/src/main.rs` (dstack key derivation)
+- `tinycloud-node` (`05c6a93`): `deploy/share-email/production-trust-bundle-contract.md:42-45` (production issuer identity)

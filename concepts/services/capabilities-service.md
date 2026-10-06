@@ -7,13 +7,13 @@ layer: protocol
 resource: "tinycloud.capabilities/{action}"
 sources:
   - repo: tinycloud-node
-    path: tinycloud-core/src/db.rs
+    path: tinycloud-core/src/db.rs@05c6a93
   - repo: tinycloud-node
-    path: tinycloud-core/src/types/capabilities_read_params.rs
+    path: tinycloud-core/src/types/capabilities_read_params.rs@05c6a93
   - repo: js-sdk
     path: packages/sdk-core/src/spaces/SpaceService.ts
 tags: [service, capabilities, authz]
-timestamp: 2026-06-23
+timestamp: 2026-10-05
 ---
 
 # Capabilities Service
@@ -28,7 +28,7 @@ The capabilities service lives in [[architecture-layers|Layer 1]]. Where [[kv|kv
 
 ### Ability
 
-The namespace is `tinycloud.capabilities/{action}`, dispatched in `SpaceDatabase::invoke` (`tinycloud-core/src/db.rs:640`). The matcher keys on `(space, "capabilities", "tinycloud.capabilities/read", path)` and **requires `path == "all"`**:
+The namespace is `tinycloud.capabilities/{action}`, dispatched in `SpaceDatabase::invoke` (`tinycloud-core/src/db.rs:1646`, read arm at `:2037` @05c6a93). The matcher keys on `(space, "capabilities", "tinycloud.capabilities/read", path)` and **requires `path == "all"`**:
 
 | Ability | Effect | Outcome (`db.rs`) |
 |---|---|---|
@@ -66,5 +66,5 @@ An agent holding `tinycloud.capabilities/read` over `tinycloud:pkh:eip155:1:0xf3
 Shipped, but minimal: one ability (`read`), one path (`all`), read-only. The selector lives in UCAN **facts** (`capabilitiesReadParams`), not in the resource or ability string — an easy-to-miss detail. No-params is a backward-compat alias for `list`-all. Code is canonical.
 
 ## Sources
-- `tinycloud-node`: `tinycloud-core/src/db.rs:640-676` (`tinycloud.capabilities/read` dispatch, `OpenSessions`/`DelegationChain`, facts extraction), `tinycloud-core/src/types/capabilities_read_params.rs` (`CapabilitiesReadParams`, `ListFilters`)
+- `tinycloud-node` @05c6a93 (Node 1.17.3): `tinycloud-core/src/db.rs:2037-2070` (`tinycloud.capabilities/read` dispatch, `OpenSessions`/`DelegationChain`, facts extraction), `tinycloud-core/src/types/capabilities_read_params.rs` (`CapabilitiesReadParams`, `ListFilters`)
 - `js-sdk`: `packages/sdk-core/src/spaces/SpaceService.ts:976-1063` (`delegations.list()`/`listReceived()`, `capabilitiesReadParams` facts)

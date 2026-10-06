@@ -6,17 +6,19 @@ status: shipped
 layer: protocol
 sources:
   - repo: tinycloud-node
-    path: tinycloud-core/src/storage/mod.rs
+    path: tinycloud-core/src/storage/mod.rs@05c6a93
   - repo: tinycloud-node
-    path: tinycloud-core/src/storage/either.rs
+    path: tinycloud-core/src/storage/either.rs@05c6a93
   - repo: tinycloud-node
-    path: tinycloud-node-server/src/storage/file_system.rs
+    path: tinycloud-node-server/src/storage/file_system.rs@05c6a93
   - repo: tinycloud-node
-    path: tinycloud-node-server/src/storage/s3.rs
+    path: tinycloud-node-server/src/storage/s3.rs@05c6a93
   - repo: tinycloud-node
-    path: tinycloud-core/src/hash.rs
+    path: tinycloud-core/src/hash.rs@05c6a93
+  - repo: tinycloud-node
+    path: tinycloud-core/src/db.rs@05c6a93
 tags: [storage, blobs, content-addressing]
-timestamp: 2026-06-23
+timestamp: 2026-10-05
 ---
 
 # Blob Store
@@ -37,7 +39,7 @@ The store is defined by a set of narrow `async` traits in `tinycloud-core/src/st
 - **`ImmutableStaging`** — `get_staging_buffer` / `stage`, which wraps the writable in a `HashBuffer` that hashes bytes as they stream in.
 - **`ImmutableWriteStore<S>`** — `persist` (returns the computed `Hash`) and `persist_keyed` (asserts the staged bytes hash to a caller-supplied `Hash`, else `KeyedWriteError::IncorrectHash`).
 - **`ImmutableDeleteStore`** — `remove`.
-- **`StoreSize`** — `total_size(space)` for quota accounting.
+- **`StoreSize`** — `total_size(space)` for [[quota]] accounting.
 - **`StorageConfig<S>` / `StorageSetup`** — `open()` a configured store and `create(space)` its per-space container.
 
 ### Backends, `Either`-combined
@@ -47,7 +49,7 @@ Two production backends implement the stack, both in `tinycloud-node-server/src/
 - **`FileSystemStore`** (`file_system.rs`) — one file per blob at `{root}/{space.suffix()}/{space.name()}/{base64url(hash)}`. Staging uses a `TempFileSystemStage` (a `NamedTempFile` persisted into place once hashed). `create(space)` makes the per-space directory.
 - **`S3BlockStore`** (`s3.rs`) — the AWS SDK backend, namespacing blobs by S3 key prefix.
 
-These are unified by the **`Either<A, B>`** combinator (`storage/either.rs`): `Either` implements every storage trait by delegating to whichever arm is present, surfacing errors as `EitherError<A, B>`. The server pins the concrete type aliases (`tinycloud-node-server/src/lib.rs:65-67`):
+These are unified by the **`Either<A, B>`** combinator (`storage/either.rs`): `Either` implements every storage trait by delegating to whichever arm is present, surfacing errors as `EitherError<A, B>`. The server pins the concrete type aliases (`tinycloud-node-server/src/lib.rs:145-147`):
 
 ```rust
 pub type BlockStores = Either<S3BlockStore, FileSystemStore>;
@@ -69,19 +71,19 @@ The physical key of any blob is the pair **`(SpaceId, Hash)`**. On the filesyste
 {block_root}/{did-suffix}/{space-name}/{base64url(blake3-256 multihash)}
 ```
 
-e.g. `…/pkh:eip155:1:0xf39f…2266/default/{base64url-hash}`. The value half of a `kv_write` row in the [[metadata-db]] is exactly this `Hash`, and `get_kv` resolves a key by reading the latest `kv_write` (see [[conflict-resolution]]) then streaming `store.read(space, value_hash)`.
+e.g. `…/pkh:eip155:1:0xf39f…2266/default/{base64url-hash}`. The `value` of a key's `current_kv` row (and of each `kv_write` history row) in the [[metadata-db]] is exactly this `Hash`, and `get_kv` resolves a key by reading its live `current_kv` row, then streaming `store.read(space, value_hash)` (`db.rs:3272-3310`).
 
 ## Relationships
 
-Stores the bytes that the [[services|KV service]] reads and writes; addressed per [[autonomic-space|space]] (`SpaceId`) so spaces share a content namespace by hash; its hashes are the `value` fields of `kv_write` records in the [[metadata-db]] and feed the [[epochs-dag|epoch DAG]] CIDs; backend choice (FS/S3) is wired via the `Either` combinator; size feeds [[services|quota]]. Distinct from the [[per-space-sql|SQL service]], which keeps its own on-disk database files rather than content-addressed blobs.
+Stores the bytes that the [[services|KV service]] reads and writes; addressed per [[autonomic-space|space]] (`SpaceId`) so spaces share a content namespace by hash; its hashes are the `value` fields of `current_kv` and `kv_write` records in the [[metadata-db]] and feed the [[epochs-dag|epoch DAG]] CIDs; backend choice (FS/S3) is wired via the `Either` combinator; its size feeds the space [[quota]]. Distinct from the [[per-space-sql|SQL service]], which keeps its own on-disk database files rather than content-addressed blobs.
 
 ## Example
 
-A `tinycloud.kv/put` of `photo.jpg` under `…:default/kv/`: the node `stage`s the upload, the `HashBuffer` computes Blake3 hash `H`, `persist` writes the bytes to `…/pkh:eip155:1:0x…/default/{base64url(H)}`, and a `kv_write` row is recorded in the [[metadata-db]] mapping key `photo.jpg` → `value = H`. A later `tinycloud.kv/get` looks up the latest non-deleted `kv_write` for that key, gets `H`, and streams it back from the blob store. (See [[uri-addressing-grammar]] for the resource string.)
+A `tinycloud.kv/put` of `photo.jpg` under `…:default/kv/`: the node `stage`s the upload, the `HashBuffer` computes Blake3 hash `H`, `persist` writes the bytes to `…/pkh:eip155:1:0x…/default/{base64url(H)}`, and a `kv_write` row is recorded in the [[metadata-db]] mapping key `photo.jpg` → `value = H`. A later `tinycloud.kv/get` looks up the key's `current_kv` row (one row per key, not a tombstone), gets `H`, and streams it back from the blob store. A `tinycloud.kv/del` only tombstones the key; the blob stays, since other keys or history may share it. (See [[uri-addressing-grammar]] for the resource string.)
 
 ## Status & drift
 
-Shipped. Note there is **no libp2p/IPFS block exchange** in the compiled path despite the CID-based addressing — `libp2p` is used only for ed25519 / `PeerId` identity (`keys.rs`), and cross-node block transfer belongs to the not-yet-mounted [[replication]] subsystem. So "content-addressed" here means local integrity + dedup, not a networked DHT. See [[meta/contradictions]] and [[future/replication-and-discovery]].
+Shipped in Node 1.17.3. There is **no libp2p/IPFS block exchange** despite the CID-based addressing — `libp2p` is used only for ed25519 / `PeerId` identity (`keys.rs`), and no cross-node block transfer exists in the node; multi-host [[replication]] is planned. So "content-addressed" here means local integrity + dedup, not a networked DHT. Space usage for the [[quota]] is `store_size` = block bytes from this store plus SQL/DuckDB artifact bytes (`db.rs:977-984`). See [[meta/contradictions]] and [[future/replication-and-discovery]].
 
 ## Sources
-- `tinycloud-node`: `tinycloud-core/src/storage/mod.rs` (trait stack), `tinycloud-core/src/storage/either.rs` (`Either`/`EitherError`), `tinycloud-node-server/src/storage/file_system.rs` (`FileSystemStore`, `get_path`), `tinycloud-node-server/src/storage/s3.rs` (`S3BlockStore`), `tinycloud-node-server/src/lib.rs:65-67` (`BlockStores` aliases), `tinycloud-core/src/hash.rs` (Blake3-256 `Hash`/`to_cid`)
+- `tinycloud-node` @05c6a93 (Node 1.17.3): `tinycloud-core/src/db.rs:977-984` (`store_size`), `:3272-3310` (`get_kv` over `current_kv`), `tinycloud-core/src/storage/mod.rs` (trait stack), `tinycloud-core/src/storage/either.rs` (`Either`/`EitherError`), `tinycloud-node-server/src/storage/file_system.rs` (`FileSystemStore`, `get_path`), `tinycloud-node-server/src/storage/s3.rs` (`S3BlockStore`), `tinycloud-node-server/src/lib.rs:145-147` (`BlockStores` aliases), `tinycloud-core/src/hash.rs` (Blake3-256 `Hash`/`to_cid`)

@@ -9,7 +9,7 @@ sources:
   - repo: whitepaper
     path: README.md
 tags: [framing, trust-model]
-timestamp: 2026-06-23
+timestamp: 2026-10-05
 ---
 
 # Trust Model
@@ -59,6 +59,18 @@ honesty.
 - **Your own key.** Security of a space depends on protecting the owner's private
   key; the protocol recommends least-authority grants, time bounds, session keys
   over root keys, and prompt [revocation](../authorization/revocation.md).
+  Sessions last 30 days by default (SDK 3.0), so revocation — not expiry — is
+  the control for ending one early.
+- **OpenKey, if it holds your key.** For [OpenKey](../identity/openkey.md)
+  managed keys you trust OpenKey's TEE custody (attestable via its key quote
+  endpoint) and its consent page, where you see each capability before
+  approving. [Device approvals](../identity/device-authorization.md) can be
+  phished ("approve this code"), so they are limited to KV access in one
+  ordinary space for at most 30 days.
+- **Services you route data through.** The hosted
+  [MCP server](../agents/mcp.md) sees plaintext inputs and results for the
+  operations it executes on your behalf; use the local stdio server to keep
+  that inside your machine.
 - **Hosts for availability only.** Hosts must hold a host delegation to serve a
   [space](../spaces/space-hosting.md); they are trusted to be available, not to
   be honest about authorization.

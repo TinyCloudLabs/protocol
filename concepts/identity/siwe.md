@@ -12,7 +12,7 @@ sources:
   - repo: js-sdk
     path: packages/sdk-core/src/userAuthorization.ts
 tags: [identity, siwe, recap, cacao]
-timestamp: 2026-06-23
+timestamp: 2026-10-05
 ---
 
 # Sign-In with Ethereum
@@ -28,6 +28,8 @@ SIWE is where the [[dids|owner DID]] (`did:pkh:eip155:…`) exercises root autho
 1. The client assembles the capabilities the app/[[manifest-model|manifest]] needs and encodes them as a **[[recap|ReCap]]** (`urn:recap:…`) appended to the SIWE message (`dependencies/siwe-recap/src/capability.rs`).
 2. The wallet signs the SIWE string; the signature + message are wrapped into a **[[cacao|CACAO]]** (`dependencies/cacao`).
 3. The node accepts that CACAO as a `TinyCloudDelegation` root (`tinycloud-auth/src/authorization.rs`), the source of the [[delegation]] chain every later [[invocation]] traces to.
+
+When [[openkey|OpenKey]] signs (a managed key in its TEE), the owner may uncheck capabilities on the consent page, so the signed SIWE can be narrower than the prepared one; OpenKey verifies the signature against the address in the *signed* message and the client completes with that message. A decrypt grant on an [[encryption-networks|encryption network]] is a **top-level** ReCap resource (`urn:tinycloud:encryption:<ownerDid>:<name>`), not nested under a space, and the node authorizes decrypt only in that form.
 
 The client builds and signs this in `packages/sdk-core/src/userAuthorization.ts` (`prepareSession` → wallet signs → `completeSessionSetup`); see [[sign-in-flow]] for the full sequence and [[cacao-chain-validation]] for how the node validates it.
 

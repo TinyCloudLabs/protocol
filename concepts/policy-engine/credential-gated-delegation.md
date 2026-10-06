@@ -1,67 +1,88 @@
 ---
 type: concept
 title: Credential-Gated Delegation
-description: A delegation whose issuance is gated on a verifiable credential — the policy engine's `evidence{}` conditions, verified by the VC evidence verifier, that turn an OpenCredentials credential into a satisfied condition for minting a grant.
-status: in-progress
+description: A delegation the Node mints only after it verifies an OpenCredentials vc+sd-jwt credential itself — exact email or email domain, from a pinned issuer, at most 300 s old — once, at session mint.
+status: shipped
 layer: protocol
 sources:
-  - repo: policy-engine
-    path: crates/policy-evidence-vc/src/lib.rs
-  - repo: policy-engine
-    path: src/evaluator.rs
-  - repo: policy-engine
-    path: crates/policy-runtime/src/lib.rs
+  - repo: tinycloud-node
+    path: tinycloud-node-server/src/policy_v3.rs@05c6a93
+  - repo: tinycloud-node
+    path: tinycloud-node-server/src/lib.rs@05c6a93
+  - repo: tinycloud-node
+    path: deploy/share-email/production-trust-bundle-contract.md@05c6a93
+  - repo: js-sdk
+    path: packages/sdk-core/src/policy/credential-admission.ts@d43e51ea
 tags: [policy-engine, credentials]
-timestamp: 2026-06-23
+timestamp: 2026-10-05
 ---
 
 # Credential-Gated Delegation
 
-**Credential-gated delegation** is a [[delegation]] the [[overview|policy engine]] issues *only* when the requester presents a **verifiable credential** that the engine independently verifies. In the [[policy-as-central-primitive|Policy]]'s `when` rule this is an `evidence{}` condition; at request time the holder attaches a credential presentation; the engine's **VC evidence verifier** (`crates/policy-evidence-vc`) checks it and adds the requirement to the *satisfied* set, after which `when` can pass and the grant is minted. It is the literal pipeline behind [[feeds-policy-engine|"credentials feed the policy engine"]].
+**Credential-gated delegation** is a [[delegation]] the [[nodes|Node]] mints only after the recipient presents a verifiable credential that the Node checks itself. The owner's Policy v2 names a `credentialRequirement`. The recipient brings an [[opencredentials|OpenCredentials]] [[sd-jwt-vc|`vc+sd-jwt`]] credential and a signed presentation. If both check out, the Node signs a policy session UCAN to the recipient (see [[policy-v3-admission]]). This is the concrete pipeline behind [[feeds-policy-engine|"credentials feed the policy engine"]].
 
 ## Role
 
-[[policy-as-central-primitive|Policy as central primitive]] lets an owner condition authority on facts. Credential-gating is the most powerful such fact: not "is this a specific key" but "does this holder possess a credential — an email-domain, a membership — issued by a trusted [[witness-service|witness]]." Crucially, the engine **never trusts the holder's claim of satisfaction**: `evaluate_expression` only counts evidence IDs the engine itself verified ([[overview#mechanics]]), so a credential condition is a real cryptographic gate, not a flag. This is the join between [[architecture-layers|Layer 1]] permissioning and the [[credentials|OpenCredentials]] [[architecture-layers#layer-2--tinycloud-apps|Layer 2]] credential app.
+The gate turns "whoever proves `alice@example.com`" or "anyone at `example.com`" into real authority, with no owner signature per recipient. The Node never trusts a holder's claim that the requirement is met: it parses the SD-JWT, checks the issuer signature against an operator-pinned key, and binds the credential to the presenting key. The credential is checked **once, at mint**. Later invocations rely on the session chain and the policy roots, not on re-presenting the credential.
 
 ## Mechanics
 
-An `evidence{}` requirement names a `verifier` and opaque `requirements`. The v0 verifier is `VcEvidenceVerifier` (`crates/policy-evidence-vc/src/lib.rs`), keyed to verifier profile `w3c.vc/credential/v1` and credential type `opencredentials.email/v1` (the [[sd-jwt-vc|email-domain SD-JWT]] from [[credentials|OpenCredentials]]). Its `verify(requirement, presentation, context)` enforces:
+### The requirement
 
-1. **Verifier match** — `requirement.verifier` must be `w3c.vc/credential/v1`; else `evidence-verifier-unsupported`.
-2. **Requirements parse** — `requirements` deserializes to `{ type: "opencredentials.email/v1", emailDomains: [...] }`; domains are NFC/ASCII-normalized (`normalize_email_domain`), rejecting non-ASCII (`evidence-domain-invalid`) and empty lists (`evidence-domain-missing`).
-3. **Accepted issuers** — the requirement's `authority.accepted_issuers` must be non-empty, and each is looked up in the verifier's issuer-key registry; an issuer with no registered key is `evidence-issuer-untrusted`.
-4. **Credential verification** — for each accepted issuer, `EmailCredentialVerifier` (from the upstream `opencredentials-verify` crate, pinned `git rev c9fa2fe`) checks the SD-JWT signature, that its subject equals `context.eligible_subject_did`, that the disclosed **email domain** matches an allowed domain (selective disclosure — the full address is *not* required, and presenting the full email *without* the domain disclosure is rejected), and expiry.
-5. **Freshness** — if the requirement sets `freshness.max_status_age_seconds`, a credential older than that is rejected `evidence-freshness-expired`.
+A Policy v2 `credentialRequirement` has exactly `{type, version, requirementDigest, descriptorDigest, issuerDid, issuerKid, profile, credentialType}`. `profile` and `credentialType` are versioned identifiers (`{id, version: 1}`). Two profiles are pinned, both with credential type `opencredentials.email/v1`:
 
-On success it returns a `Satisfaction { evidence_ids: [requirement_id], valid_until, provenance }`. The runtime collects every satisfaction, re-runs `evaluate_expression` with the satisfied IDs, and — critically — caps the grant's TTL at `min(max_ttl, presentation.expires_at, every credential's valid_until)` (`grant_expires_at`), so the delegation **cannot outlive the credential that authorized it**.
+| Profile | Matches |
+|---|---|
+| `tinycloud.email-proof/v1` | one exact mailbox |
+| `tinycloud.email-domain-proof/v1` | any mailbox whose issuer-derived domain equals the policy's domain exactly (no subdomains) |
+
+For both profiles the Node pins status freshness at **300 s**, even if a policy omits or relaxes it.
+
+### The trusted issuer
+
+The operator configures one issuer: DID, VCT, key version, `kid`, and a 32-byte Ed25519 public key (`lib.rs:465-479`). In production that issuer is `did:web:issuer.credentials.org` with VCT `opencredentials.email/v1` (production trust-bundle contract). A disabled issuer or key version 0 is `credential-issuer-untrusted`.
+
+### Verification at mint
+
+On `POST /policy/v3/delegations` the Node:
+
+1. Checks the credential envelope: `type: OpenCredentialsIssuedCredential`, `protocol: tinycloud.credentials/acquisition/v1`, `format: "vc+sd-jwt"`. Profile, credential type, issuer DID, `kid` and descriptor digest must equal the requirement. `holderDid` and `subjectDid` must both equal the expected holder.
+2. Parses the SD-JWT in-tree. It splits on `~`, requires an `EdDSA` compact JWT whose `typ`/`kid` match, and verifies the issuer signature and disclosures.
+3. Verifies the signed presentation, `PolicyCredentialPresentation`:
+   - **v3**, account path: binds the account authorization and a recipient-owned `credentialSpaceId`;
+   - **v4**, accountless: a holder proof where `holderDid == subjectDid`, both `did:key`. This is the production browser path.
+4. Checks the presentation against the challenge, nonce, node audience, expiry and requested capabilities, then mints the session. v4 sessions also record domain-separated digests of the credential ID and presentation JTI for audit, without the raw values.
 
 ## Shape
 
 ```
-// in Policy.when:
-evidence { EvidenceRequirement {
-  requirement_id: "email-domain",
-  verifier:       "w3c.vc/credential/v1",
-  requirements:   { type: "opencredentials.email/v1", emailDomains: ["tinycloud.xyz"] },
-  authority:      { accepted_issuers: ["did:web:issuer.tinycloud.xyz"] },
-  freshness?:     { max_status_age_seconds }
-}}
+credentialRequirement = { type, version, requirementDigest, descriptorDigest,
+                          issuerDid: "did:web:issuer.credentials.org", issuerKid,
+                          profile: { id: "tinycloud.email-domain-proof/v1", version: 1 },
+                          credentialType: { id: "opencredentials.email/v1", version: 1 } }
 
-// in GrantPresentation.evidence:
-PresentedEvidence { requirement_id: "email-domain", presentation: { sdJwt: "<SD-JWT>" } }
+PolicyCredentialPresentation/v4 = { schema: "xyz.tinycloud.policy/presentation/v4", jti, challengeId, nonce,
+                          policyCid, nodeAudience, holderDid, subjectDid, credentialDigest,
+                          requirementDigest, descriptorDigest, requestedCapabilities,
+                          issuedAt, expiresAt } + holder signature
 ```
 
 ## Relationships
 
-Implements the `evidence{}` arm of [[policy-as-central-primitive|the `when` grammar]]; verifies [[sd-jwt-vc|SD-JWT credentials]] issued by the [[witness-service|witness service]] as part of [[credentials|OpenCredentials]]; the satisfied requirement lets [[policy-engine/overview|`resolve`]] mint a [[capabilities|portable-delegation]]; runs alongside [[agent-transaction-policy|holder enrollment]]; the end-to-end framing is [[feeds-policy-engine]]; lives in [[architecture-layers|Layer 1]] consuming [[architecture-layers#layer-2--tinycloud-apps|L2]] credentials.
+The credential step of [[policy-v3-admission]] and the only shipped condition of [[policy-as-central-primitive|a policy]]; verifies [[sd-jwt-vc|SD-JWT credentials]] issued by the [[witness-service|witness]] for [[opencredentials|OpenCredentials]]; the overview is [[feeds-policy-engine]]; produces a [[delegation]] bounded by [[attenuation]]; powers email and domain [[native-sharing|Share links]]; recipients are [[dids|`did:key`]] holders.
 
 ## Example
 
-Policy `when = evidence{"email-domain"}` requiring `opencredentials.email/v1` from `did:web:issuer.tinycloud.xyz`, domain `tinycloud.xyz`. A holder presents `{ sdJwt: "<email-domain SD-JWT for sam@tinycloud.xyz>" }`. The verifier confirms the witness signature, that the credential's subject is the eligible subject, and that the disclosed *domain* is `tinycloud.xyz` — **without** the SD-JWT ever revealing `sam@`. `evaluate_expression` now sees `{"email-domain"}` satisfied, `when` passes, and a `tinycloud.sql/read` grant is issued, expiring at the credential's expiry or one hour, whichever is sooner. A wrong domain, wrong issuer, subject mismatch, expired or stale credential each fail with a distinct `evidence-*` error (the verifier's own tests cover all five).
+Alice's policy requires `tinycloud.email-domain-proof/v1` for `example.com`. Bob proves `bob@example.com` to the witness with an 8-digit mailbox code and gets a credential bound to his browser `did:key`. Within 300 s he posts it with a v4 presentation. The Node checks the issuer signature against its pinned `did:web:issuer.credentials.org` key, confirms the issuer-derived domain is exactly `example.com`, and mints Bob's session. A credential for `bob@eu.example.com` fails, because domains must match exactly.
 
 ## Status & drift
 
-`in-progress`. The verifier, the `evidence{}` grammar, and TTL-capping are **frozen v0 + shipped + tested** in `policy-evidence-vc` and `policy-runtime`. The only credential profile wired today is **email-domain** (`opencredentials.email/v1`); additional [[credentials|OpenCredentials]] credential types are design-intent. As with the whole engine, the grant it emits is honored by [[nodes|the node]] only once node consumption lands — currently the node does not consume the engine (see [[overview#status--drift]]). **Repo status:** the cited `policy-engine` repo is not public under TinyCloudLabs, and this design has been superseded by Data Exchange v0 (the `sssoforth/information-sphere` lineage); treat this page as historical context, not the current build target. See [[meta/contradictions]].
+`shipped` in Node 1.17.3 (`tinycloud-node@05c6a93`): exact-email admission since 1.16.0 (browser holder-bound) and 1.15.0 (accountless v4), domain profile and its 300 s pin in 1.17.3. Only the two mailbox profiles are wired; other OpenCredentials types (X, DNS, …) are not accepted by the Node. Older versions of this page named the issuer `did:web:issuer.tinycloud.xyz`; that is wrong.
+
+### History: policy-core v0
+
+The earlier `policy-core` design expressed this as an `evidence{}` node in a `when` tree, verified by a `policy-evidence-vc` crate with verifier `w3c.vc/credential/v1` and a `GrantPresentation` carrying `{ sdJwt }`. That crate never ran in the Node server; in Node 1.17.3 it is used only by test crates (such as `test/m1-realdata-e2e`), never by the server.
 
 ## Sources
-- `policy-engine`: `crates/policy-evidence-vc/src/lib.rs` (`VcEvidenceVerifier::verify`, freshness, selective-disclosure tests), `src/evaluator.rs:76` (satisfied-evidence gating), `crates/policy-runtime/src/lib.rs` (`verify_evidence` + `grant_expires_at` TTL cap), `crates/policy-evidence-vc/Cargo.toml` (`opencredentials-verify` git rev c9fa2fe)
+- `tinycloud-node` (`05c6a93`, Node 1.17.3): `tinycloud-node-server/src/policy_v3.rs` (presentation schemas :56-59; requirement :4185; profile freshness pin :5847-5855; envelope + SD-JWT verification :5866-5960; v4 admission :5614), `tinycloud-node-server/src/lib.rs:465-479` (issuer key config), `deploy/share-email/production-trust-bundle-contract.md:42-45` (production issuer), `CHANGELOG.md` (1.15.0, 1.16.0, 1.17.3)
+- `js-sdk` (`d43e51ea`, SDK 3.0.0): `packages/sdk-core/src/policy/credential-admission.ts:360-376` (v4 holder proof, `holderDid == subjectDid`)

@@ -7,19 +7,19 @@ layer: protocol
 resource: "urn:tinycloud:encryption:{ownerDid}:{name}"
 sources:
   - repo: tinycloud-node
-    path: tinycloud-core/src/encryption_network/backend.rs
+    path: tinycloud-core/src/encryption_network/backend.rs@05c6a93
   - repo: tinycloud-node
-    path: tinycloud-core/src/encryption_network/types.rs
+    path: tinycloud-core/src/encryption_network/types.rs@05c6a93
   - repo: tinycloud-node
-    path: tinycloud-core/src/encryption_network/network_id.rs
+    path: tinycloud-core/src/encryption_network/network_id.rs@05c6a93
   - repo: tinycloud-node
-    path: tinycloud-core/src/encryption_network/service.rs
+    path: tinycloud-core/src/encryption_network/service.rs@05c6a93
   - repo: js-sdk
-    path: packages/sdk-services/src/encryption/networkId.ts
+    path: packages/sdk-services/src/encryption/networkId.ts@d43e51ea
   - repo: js-sdk
-    path: packages/sdk-services/src/encryption/envelope.ts
+    path: packages/sdk-services/src/encryption/envelope.ts@d43e51ea
 tags: [encryption, networks, x25519]
-timestamp: 2026-06-23
+timestamp: 2026-10-05
 ---
 
 # Encryption Networks
@@ -82,11 +82,11 @@ V1 ships exactly one `KeyBackend`, `LocalOneOfOneBackend` (`backend.rs`). `gener
 
 ### Node unwrap/rewrap (never plaintext)
 
-The node never decrypts the *payload*. On a verified [[user-bound-decrypt|decrypt invocation]], it loads the sealed private key, `unwrap`s the `encryptedSymmetricKey` to the raw symmetric key, then immediately `rewrap`s that key to the caller's **per-request `receiverPublicKey`** and returns only the rewrapped key (`service.rs:570-573`). The transient symmetric key is dropped. The client then DH-unwraps it with its ephemeral receiver secret and AES-256-GCM-decrypts the ciphertext locally (`envelope.ts:decryptEnvelopeWithKey`). So the node sees ciphertext-shaped key material on both sides and never the plaintext.
+The node never decrypts the *payload*. On a verified [[user-bound-decrypt|decrypt invocation]], it loads the sealed private key, `unwrap`s the `encryptedSymmetricKey` to the raw symmetric key, then immediately `rewrap`s that key to the caller's **per-request `receiverPublicKey`** and returns only the rewrapped key as `wrappedKey` (`service.rs`, `decrypt_authorized`, around `:788-815`). The transient symmetric key is dropped. The client then DH-unwraps it with its ephemeral receiver secret and AES-256-GCM-decrypts the ciphertext locally (`envelope.ts:decryptEnvelopeWithKey`). So the node sees ciphertext-shaped key material on both sides and never the plaintext.
 
 ## Relationships
 
-Identified by a `NetworkId` URN (a [[uri-addressing-grammar|Resource::Other]] form, not a space URI); decryption against it is a [[user-bound-decrypt|user-bound, capability-gated invocation]] checked against a [[capabilities|capability]] chain rooted at the `ownerDid`; reuses the [[at-rest]] `ColumnEncryption` AEAD for both the ECIES wrap and sealing the private key at rest; published for discovery via the `.well-known/encryption/network/<name>` record ([[system-spaces]]); the reserved `Threshold` backend is the seed of [[threshold-decryption]]; one mechanism of the encryption [[overview]].
+Identified by a `NetworkId` URN (a [[uri-addressing-grammar|Resource::Other]] form, not a space URI); decryption against it is a [[user-bound-decrypt|user-bound, capability-gated invocation]] checked against a [[capabilities|capability]] chain rooted at the `ownerDid`, whose grant names the network URN as a top-level resource; reuses the [[at-rest]] `ColumnEncryption` AEAD for both the ECIES wrap and sealing the private key at rest; published for discovery via the `.well-known/encryption/network/<name>` record ([[system-spaces]]); the reserved `Threshold` backend is the seed of [[threshold-decryption]]; one mechanism of the encryption [[overview]].
 
 ## Example
 
@@ -97,5 +97,5 @@ A network `urn:tinycloud:encryption:did:pkh:eip155:1:0xf39F…2266:default` is c
 In-progress. `LocalOneOfOneBackend` (`n=1, t=1`), creation, descriptor, `.well-known` discovery, and the decrypt invocation path are implemented and tested in `encryption_network/`. The `Dstack` backend kind exists; the `Threshold` kind is reserved but "not implemented in v1" (see [[threshold-decryption]]). `NetworkState` enumerates `Rotating` but v1 documents transitions only as `Pending → Generating → Active`, and creation goes straight to `Active`. Key rotation/`keyVersion` bump beyond `1` is modeled in the data shapes but not exercised in v1. The decrypt invocation envelope is "intentionally a self-contained envelope, not the existing TinyCloud CACAO/UCAN invocation" — see [[user-bound-decrypt]] for the two verification paths. Code is canonical.
 
 ## Sources
-- `tinycloud-node`: `encryption_network/mod.rs` (no node-side encrypt API), `encryption_network/backend.rs` (`KeyBackend`, `LocalOneOfOneBackend`, `wrap_to_public_key`/ECIES, seal-at-rest), `encryption_network/types.rs` (`ALG_X25519_AES256GCM`, `InlineEnvelope`, `NetworkDescriptor`, `NetworkState`, `KeyBackendKind`, `Threshold`), `encryption_network/network_id.rs` (`NetworkId` URN parse), `encryption_network/service.rs:154-245,570-573` (create + unwrap/rewrap)
+- `tinycloud-node`: `encryption_network/mod.rs` (no node-side encrypt API), `encryption_network/backend.rs` (`KeyBackend`, `LocalOneOfOneBackend`, `wrap_to_public_key`/ECIES, seal-at-rest), `encryption_network/types.rs` (`ALG_X25519_AES256GCM`, `InlineEnvelope`, `NetworkDescriptor`, `NetworkState`, `KeyBackendKind`, `Threshold`), `encryption_network/network_id.rs` (`NetworkId` URN parse), `encryption_network/service.rs:162` (create), `:680-815` (`decrypt_authorized`, unwrap/rewrap) — all @05c6a93 (Node 1.17.3)
 - `js-sdk`: `packages/sdk-services/src/encryption/networkId.ts` (URN grammar, `NETWORK_NAME_RE`), `packages/sdk-services/src/encryption/envelope.ts` (`encryptToNetwork`, local wrap/decrypt)
