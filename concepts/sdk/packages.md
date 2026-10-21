@@ -36,12 +36,12 @@ The TinyCloud **js-sdk** is a monorepo of layered packages: a platform-agnostic 
 
 ## Install
 
-The `@tinycloud` packages are on npm. Current stable: **`web-sdk`/`node-sdk`/`sdk-core` 3.0.0**, `cli` 1.0.0, `share-sdk` 1.0.0, `mcp` and `operations` 0.3.3, `@openkey/sdk` 0.10.2 (betas: SDKs 3.1.0, CLI 1.1.0, MCP 0.4.0). A browser app pulls `web-sdk` + the [[openkey|OpenKey]] SDK; a backend pulls `node-sdk`:
+The `@tinycloud` packages are on npm. Current stable: **`web-sdk`/`node-sdk`/`sdk-core` 3.3.0**, `cli` 1.3.0, `share-sdk` 1.2.0, `mcp` and `operations` 0.7.0, `@openkey/sdk` 0.12.1 (betas: SDKs 3.3.0-beta.39, CLI 1.3.0-beta.55, MCP 0.7.0-beta.39). A browser app pulls `web-sdk` + the [[openkey|OpenKey]] SDK; a backend pulls `node-sdk`:
 
 ```bash
-npm install @tinycloud/web-sdk@3.0.0 @openkey/sdk   # frontend
-npm install @tinycloud/node-sdk@3.0.0               # backend
-npm install -g @tinycloud/cli@1.0.0                 # optional: the `tc` CLI
+npm install @tinycloud/web-sdk@3.3.0 @openkey/sdk   # frontend
+npm install @tinycloud/node-sdk@3.3.0               # backend
+npm install -g @tinycloud/cli@1.3.0                 # optional: the `tc` CLI
 npm install -g @tinycloud/mcp                       # optional: local MCP server
 ```
 
@@ -59,4 +59,4 @@ Shipped (3.0.0 stable as of Oct 4, 2026). Note `architecture.md` references a le
 
 ## Sources
 - `js-sdk` (`v3.0.0` = `d43e51ea`): `architecture.md`, `packages/` (sdk-core, sdk-services, node-sdk, web-sdk, sdk-rs, share-sdk, share-envelope, operations, mcp, vfs, cli), package `CHANGELOG.md` files for the 3.0.0 breaking changes
-- npm registry dist-tags (checked Oct 5, 2026)
+- npm registry dist-tags (checked Oct 21, 2026)
