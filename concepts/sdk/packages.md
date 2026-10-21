@@ -59,4 +59,4 @@ Shipped (3.0.0 stable as of Oct 4, 2026). Note `architecture.md` references a le
 
 ## Sources
 - `js-sdk` (`v3.0.0` = `d43e51ea`): `architecture.md`, `packages/` (sdk-core, sdk-services, node-sdk, web-sdk, sdk-rs, share-sdk, share-envelope, operations, mcp, vfs, cli), package `CHANGELOG.md` files for the 3.0.0 breaking changes
-- npm registry dist-tags (checked Oct 5, 2026)
+- npm registry dist-tags (checked Oct 21, 2026)
