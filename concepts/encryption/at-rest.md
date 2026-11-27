@@ -1,67 +1,99 @@
 ---
 type: concept
 title: At-Rest Encryption
-description: AES-256-GCM column encryption applied by the node to sensitive DB columns; wire format 0x01||nonce||ciphertext+tag, with first-byte version dispatch giving legacy-plaintext passthrough.
-status: shipped
+description: Node column encryption with authenticated row-bound v2 keyrings and metadata-directed legacy reads; separate from general content sealing.
+status: in-progress
 layer: protocol
 sources:
   - repo: tinycloud-node
-    path: tinycloud-core/src/encryption.rs@05c6a93
+    path: tinycloud-core/src/encryption.rs@622e78cfc989134f6c38f2edebe98a9c8791ee89
 tags: [encryption, at-rest]
-timestamp: 2026-10-05
+timestamp: 2026-11-27
 ---
 
 # At-Rest Encryption
 
-**At-rest encryption** is the node's AES-256-GCM protection for sensitive columns it writes to its metadata DB. It is the `ColumnEncryption` type in `tinycloud-core/src/encryption.rs`: a symmetric cipher keyed by a node-derived 32-byte key, with a one-byte version prefix that lets new encrypted writes coexist with pre-existing plaintext. It is an **internal node detail**, distinct from the user-facing [[encryption-networks|encryption networks]].
+This page describes **sensitive database column encryption** in node commit
+`622e78cfc989134f6c38f2edebe98a9c8791ee89`, verified on 2026-11-27.
+It establishes merged implementation, not the binary or configuration deployed on
+any particular host. The earlier October 5 description covered the v1 format.
 
-## Role
+`ColumnEncryption` protects selected metadata columns, including stored
+delegations/invocations and webhook material. It is distinct from client-encrypted
+app payloads, encryption-network key custody, filesystem/bucket encryption and
+the general KV/SQL content-sealing work in `tinycloud_core::at_rest`.
+Evidence for one layer does not establish the status of the others.
 
-At-rest encryption lives in [[architecture-layers|Layer 1]] and is invisible to clients — there is no API for it. The node uses it to encrypt bytes *it* owns: delegation/invocation serializations, webhook secrets and hook tickets, and (critically) the **sealed private keys of [[encryption-networks|encryption networks]]**. So `ColumnEncryption` is both a standalone at-rest mechanism *and* the AEAD building block the network mechanism reuses — see [[encryption-networks#mechanics]] and the [[overview]].
+## Current column format
 
-## Shape
+New column writes use AES-256-GCM with this byte layout:
 
-The encrypted wire format is a single version-prefixed byte string:
-
-```
-0x01 || nonce(12B) || ciphertext || tag(16B)
-```
-
-- **`0x01`** — `VERSION_ENCRYPTED`, the only encrypted version. **Any other first byte is treated as legacy plaintext** and returned as-is on decrypt.
-- **nonce** — 12 bytes, freshly generated per encryption (`Aes256Gcm::generate_nonce(&mut OsRng)`).
-- **ciphertext + tag** — the AES-256-GCM output (the 16-byte GCM tag is appended by the AEAD; the minimum valid encrypted length is therefore `1 + 12 + 16 = 29` bytes — anything shorter is `EncryptionError::TooShort`).
-
-The key is `[u8; 32]` (256-bit), passed to `ColumnEncryption::new` and never rotated within an instance.
-
-## Mechanics
-
-`ColumnEncryption::decrypt` does **version dispatch on the first byte**:
-
-1. Empty input → returned empty (`Ok`).
-2. First byte `!= 0x01` → **legacy plaintext**, returned unchanged. This is the gradual-migration path: old rows written before encryption was enabled still read correctly, because CBOR/DAG-CBOR payloads start with bytes like `0xa_`, never `0x01`.
-3. First byte `== 0x01` → split off the 12-byte nonce, AES-256-GCM-decrypt the remainder; a wrong key or tampered ciphertext fails the GCM tag check (`EncryptionError::Decrypt`).
-
-Encryption is unconditional — every `encrypt` call produces a `0x01`-prefixed value with a fresh nonce. The `maybe_encrypt`/`maybe_decrypt` free functions take an `Option<&ColumnEncryption>`: when encryption is not configured they pass bytes through untouched, so call sites stay uniform whether or not a node has encryption keys.
-
-A key node invariant: at call sites, **the content hash is always computed on plaintext, then `maybe_encrypt` is applied** — so enabling/disabling column encryption never changes a record's content-addressed identity.
-
-## Relationships
-
-Reused as the AEAD inside the [[encryption-networks|encryption-network]] ECIES wrap (over the X25519 shared secret) and to seal each network's private key at rest; protects [[delegation]]/[[invocation]] serializations and [[hooks|webhook]] secrets in the [[metadata-db|metadata DB]]; one mechanism of the [[overview|encryption overview]].
-
-## Example
-
-A node writes an encrypted column for plaintext `hello world`:
-
-```
-0x01 || <12 random bytes> || AES-256-GCM(key, nonce, "hello world") || <16-byte tag>
+```text
+0x02 || kid(1 byte) || nonce(12 bytes) || ciphertext || tag(16 bytes)
 ```
 
-On read, the first byte `0x01` selects the encrypted path; the node slices bytes `[1..13]` as the nonce and GCM-decrypts `[13..]` back to `hello world`. A row written earlier as raw CBOR (first byte `0xa2`) read through the same `decrypt` is returned verbatim — no key needed.
+The minimum encrypted length is 30 bytes. The nonce is freshly generated for
+each encryption. `kid` selects a key generation from the read keyring; the writer
+uses its selected generation. Missing generations are errors.
 
-## Status & drift
+Authenticated additional data binds the version and key ID to `RowBinding`:
 
-Shipped and stable. The seal-at-rest key for [[encryption-networks|network]] private keys is a `ColumnEncryption` derived from `b"tinycloud/encryption/network-seal"`; in DStack mode that derivation is rooted in the dstack-derived key setup, lifting network private keys into [[tee-dstack|TEE]] key management (`tinycloud-node-server/src/lib.rs:411-416` @05c6a93). Code is canonical.
+```text
+0x02 || kid
+|| u64be(table byte length) || table UTF-8 bytes
+|| u64be(column byte length) || column UTF-8 bytes
+|| u64be(number of primary-key components)
+|| for each component: u64be(component byte length) || raw component bytes
+```
+
+Moving a v2 value to another row, table or column, changing its key ID, or
+tampering with ciphertext fails authentication. Identity hashes remain based on
+plaintext; encryption does not replace the record's content identity.
+
+`storage_keyrings` derives purpose-separated column and webhook keys using
+HKDF-SHA256, retains the prior key for v1 compatibility, and applies the configured
+strict-read policy. `with_keys` rejects duplicate generations and a missing write
+key. `for_kid` selects a writer while retaining read keys; operators must retain
+keys needed by existing rows and backups.
+
+## Legacy reads are selected by stored metadata
+
+The authenticated v1 envelope remains:
+
+```text
+0x01 || nonce(12 bytes) || ciphertext || tag(16 bytes)
+```
+
+It has no row binding. `encrypt_legacy` / `decrypt_legacy` preserve the v1 protocol
+envelope used by encryption-network wrapping and legacy compatibility; they do
+not define the format of new v2 column writes.
+
+`decrypt` accepts authenticated v1 and v2 envelopes. Empty data and unknown
+version bytes are errors, **not an automatic plaintext fallback**.
+Database reads use `decrypt_recorded(data, binding, format)`:
+
+| Recorded format | Behavior |
+| --- | --- |
+| `2` (`FORMAT_V2`) | Requires a v2 envelope and authenticates it against the row binding. |
+| `0` (`FORMAT_LEGACY`), strict off | Authenticates data beginning with `0x01` or `0x02`. Other prefixes, including empty data, are accepted as recorded legacy plaintext. |
+| `0`, strict on | Requires an authenticated envelope; plaintext is refused. |
+| Any other recorded format | `UnsupportedVersion`; no plaintext fallback. |
+
+A decoder must preserve the distinction between recorded format metadata and
+envelope version. Do not infer a legacy plaintext record solely from an unknown
+first byte in an otherwise current record.
+
+## General content sealing
+
+At the checked commit, `tinycloud_core::at_rest` contains envelope primitives but
+is not wired into the node's storage paths. Sensitive-column encryption therefore
+does **not** imply that all KV blocks, SQL/DuckDB artifacts or local working files
+are sealed. Conversely, unwired general sealing does **not** mean TinyCloud has
+no encryption. Bucket/disk settings and actual deployments require their own
+evidence. See the node's `docs/at-rest/DELIVERY.md` for the implementation chain.
 
 ## Sources
-- `tinycloud-node`: `tinycloud-core/src/encryption.rs` (`ColumnEncryption`, `VERSION_ENCRYPTED`, `maybe_encrypt`/`maybe_decrypt`, tests at `:99-166`)
+
+- [Column codec and tests](https://github.com/TinyCloudLabs/tinycloud-node/blob/622e78cfc989134f6c38f2edebe98a9c8791ee89/tinycloud-core/src/encryption.rs)
+- [Serving keyring construction and database wiring](https://github.com/TinyCloudLabs/tinycloud-node/blob/622e78cfc989134f6c38f2edebe98a9c8791ee89/tinycloud-node-server/src/lib.rs)
+- [General sealing module status](https://github.com/TinyCloudLabs/tinycloud-node/blob/622e78cfc989134f6c38f2edebe98a9c8791ee89/tinycloud-core/src/at_rest/mod.rs)
