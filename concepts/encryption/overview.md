@@ -1,7 +1,7 @@
 ---
 type: concept
 title: Encryption Overview
-description: TinyCloud has two encryption mechanisms — AES-256-GCM at-rest column encryption and X25519 envelope encryption networks — both user-bound, with v1 decrypt-only (no node-side encrypt API).
+description: TinyCloud has two encryption mechanisms — AES-256-GCM at-rest column encryption and X25519 envelope encryption networks — column writes row-bound and networks user-bound, with network v1 decrypt-only (no node-side encrypt API).
 status: in-progress
 layer: protocol
 sources:
@@ -10,10 +10,14 @@ sources:
   - repo: tinycloud-node
     path: tinycloud-core/src/encryption_network/mod.rs@05c6a93
 tags: [encryption, overview]
-timestamp: 2026-10-05
+timestamp: 2026-11-27
 ---
 
 # Encryption Overview
+
+> Column-format details were refreshed from node `622e78cfc989134f6c38f2edebe98a9c8791ee89`
+> on 2026-11-27. The network discussion below retains its October 5 source; it is
+> not a current deployment report. See [[at-rest]] for the v1/v2 distinction.
 
 TinyCloud has **two distinct encryption mechanisms**: (a) **[[at-rest|at-rest column encryption]]** — AES-256-GCM applied by the node to sensitive DB columns — and (b) **[[encryption-networks|encryption networks]]** — X25519 envelope encryption where the *client* encrypts data locally to a network public key and the node only ever *unwraps and rewraps* the symmetric key. The two solve different problems and do not share key material beyond a derivation root.
 
@@ -31,8 +35,8 @@ The two mechanisms, at a glance:
 |---|---|---|
 | Algorithm | AES-256-GCM | `x25519-aes256gcm/v1` envelope (ECIES-style wrap + AES-256-GCM) |
 | Who encrypts | the **node** | the **client**, locally |
-| Key custody | node-derived static key | network X25519 keypair (private key sealed at rest) |
-| Bound to | the node instance | the **owner DID** (user-bound; see [[dids]]) |
+| Key custody | node-derived, purpose-separated column keyring | network X25519 keypair (private key sealed at rest) |
+| Bound to | table, column and primary-key components (v2) | the **owner DID** (user-bound; see [[dids]]) |
 | Node sees plaintext? | yes (it owns the data) | **never** — only unwraps/rewraps a symmetric key |
 | Access control | none (internal) | capability-gated decrypt invocation ([[user-bound-decrypt]]) |
 
@@ -40,7 +44,7 @@ The two are not unrelated in code: the X25519 ECIES wrap reuses `ColumnEncryptio
 
 ## Members
 
-- **[[at-rest|At-rest column encryption]]** — `ColumnEncryption` (AES-256-GCM, `0x01||nonce||ct` format, legacy-plaintext passthrough). The node's internal at-rest protection.
+- **[[at-rest|At-rest column encryption]]** — `ColumnEncryption` (AES-256-GCM, row-bound `0x02||kid||nonce||ct||tag` writes, metadata-directed legacy compatibility). The node's internal at-rest protection.
 - **[[encryption-networks|Encryption networks]]** — the X25519 envelope protocol: `NetworkId`, the `LocalOneOfOneBackend` key custody, and client-side local encryption.
 - **[[user-bound-decrypt|User-bound decryption]]** — how a holder actually decrypts: a capability-gated native [[invocation]] against `node + networkId`, with the node unwrapping/rewrapping to the caller's receiver key under strict hash/nonce/TTL binding. Decrypt grants must name the raw network URN as a top-level resource.
 - **[[future/threshold-decryption|Threshold decryption]]** *(planned)* — the reserved `KeyBackendKind::Threshold` slot for future ferveo-style threshold custody. Actively under development; see [[threshold-decryption]].
@@ -51,7 +55,7 @@ Implements the [[encryption-service]] surface; at-rest seals the [[encryption-ne
 
 ## Status & drift
 
-At-rest is **shipped**. Encryption networks are **wired and mounted but in active development** — the `LocalOneOfOne` backend ships; `Threshold` and `Dstack` backends are reserved/partial. Revoke is a placeholder (state flip only). Code is canonical throughout.
+Sensitive-column encryption has a historical v1 release and a merged row-bound v2 implementation; this update does not verify v2 deployment. General content sealing is separate and unwired at the checked commit. Encryption networks are **wired and mounted but in active development** — the `LocalOneOfOne` backend ships; `Threshold` and `Dstack` backends are reserved/partial. Revoke is a placeholder (state flip only). Code is canonical throughout.
 
 ## Sources
 - `tinycloud-node`: `tinycloud-core/src/encryption.rs`, `tinycloud-core/src/encryption_network/mod.rs`, `tinycloud-node-server/src/lib.rs:411-422` (service wiring + seal derivation) — @05c6a93 (Node 1.17.3)

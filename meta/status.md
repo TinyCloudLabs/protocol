@@ -1,11 +1,17 @@
 ---
 type: reference
 title: Status Matrix
-description: Shipped / in-progress / planned matrix of all services and subsystems.
+description: Historical October 5 status snapshot, with a dated November 27 column-encryption implementation update.
 timestamp: 2026-10-05
 ---
 
 # Status Matrix
+
+> The broad matrix below is the **2026-10-05 snapshot**, not current production verification.
+> A 2026-11-27 source check confirms row-bound v2 sensitive-column encryption at node
+> `622e78cfc989134f6c38f2edebe98a9c8791ee89`; see [[at-rest]]. General KV/SQL sealing
+> remains unwired there. No deployed artifact was verified for this update.
+> Use the checked source and a deployment record before treating an old status as a blocker.
 
 Reconciled from the canonical concept inventory. Code is canonical where spec and impl disagree.
 **Shipped** means deployed on the production Node (1.17.3, `tee.node.tinycloud.xyz`, built from a
@@ -38,7 +44,7 @@ Last reconciled 2026-10-05.
 | Autonomic spaces + addressing grammar | shipped |
 | Authorization (delegation / invocation / revocation / attenuation) | shipped (chain-wide revocation; policy-root revocation) |
 | CACAO chain validation | shipped |
-| At-rest column encryption (AES-256-GCM) | shipped |
+| At-rest column encryption (AES-256-GCM) | v1 historically shipped; row-bound v2 merged at the November 27 checked commit; deployment unverified |
 | Encryption networks (X25519, LocalOneOfOneBackend) | in-progress (decrypt-only v1) |
 | User-bound decryption | in-progress |
 | Threshold decryption (ferveo / TACO) | planned (reserved slot) |
